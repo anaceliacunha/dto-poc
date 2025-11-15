@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info:
+  title: DTO Schemas
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+components:
+  schemas:
+    DemoMessage:
+      $ref: ./schemas/demo-message.schema.json
+    Item:
+      $ref: ./schemas/item.schema.json

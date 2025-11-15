@@ -1,0 +1,1 @@
+This folder is reserved for OpenAPI-generated fetch clients. Run `make codegen-ts-models` (and optionally `codegen-ts-client`) to populate `gen/ts-models`, then import DTOs from `../../../gen/ts-models` inside React components.

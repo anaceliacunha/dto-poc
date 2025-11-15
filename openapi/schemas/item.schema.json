@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/item.schema.json",
+  "title": "Item",
+  "type": "object",
+  "required": ["code"],
+  "properties": {
+    "code": { "type": "string" },
+    "quantity": { "type": "number", "format": "float" },
+    "weight": { "type": "number", "format": "double" }
+  },
+  "additionalProperties": false
+}

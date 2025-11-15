@@ -1,0 +1,5 @@
+node_modules/
+webapp/react-app/node_modules/
+services/java-app/target/
+services/python-app/.venv/
+.DS_Store
