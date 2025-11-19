@@ -6,20 +6,24 @@ from typing import Optional
 
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
-from py_models import DemoMessage
+import logging
+from py_models.models.demo_message import DemoMessage
 
 from .config import Settings
+from .models import normalize_message_payload
 from .storage import MessageStore
+
+logger = logging.getLogger(__name__)
 
 
 class KafkaBridge:
     def __init__(self, settings: Settings, store: MessageStore) -> None:
         self._settings = settings
         self._store = store
+        self._stop_event = Event()
         self._producer: Optional[KafkaProducer] = None
         self._consumer: Optional[KafkaConsumer] = None
         self._thread: Optional[Thread] = None
-        self._stopped = Event()
 
     def start(self) -> None:
         self._producer = KafkaProducer(
@@ -38,31 +42,36 @@ class KafkaBridge:
         self._thread = Thread(target=self._consume_loop, daemon=True)
         self._thread.start()
 
-    def publish(self, message: DemoMessage) -> None:
+    def publish_from_python(self, message: DemoMessage) -> None:
         if not self._producer:
-            raise RuntimeError("Kafka producer not initialized")
-        payload = message.dict(by_alias=True, exclude_none=False)
+            raise RuntimeError("KafkaBridge has not been started")
+        payload = message.model_dump(by_alias=True, exclude_none=False, mode="json")
         self._producer.send(self._settings.topic_from_python, value=payload)
         self._producer.flush()
 
     def _consume_loop(self) -> None:
         assert self._consumer is not None
-        while not self._stopped.is_set():
+        while not self._stop_event.is_set():
             try:
                 for record in self._consumer:
-                    if self._stopped.is_set():
+                    if self._stop_event.is_set():
                         break
-                    dto = DemoMessage.parse_obj(record.value)
+                    try:
+                        payload = normalize_message_payload(record.value)
+                        dto = DemoMessage.model_validate(payload)
+                    except Exception as exc:  # ValidationError or others
+                        logger.warning("Skipping invalid record on %s: %s", record.topic, exc)
+                        continue
                     self._store.add_java(dto)
-            except KafkaError:
-                continue
+            except KafkaError as exc:  # type: ignore[no-untyped-call]
+                logger.warning("Kafka consumer issue: %s", exc)
 
     def close(self) -> None:
-        self._stopped.set()
-        if self._consumer:
+        self._stop_event.set()
+        if self._consumer is not None:
             self._consumer.close()
-        if self._producer:
+        if self._producer is not None:
             self._producer.flush()
             self._producer.close()
-        if self._thread:
+        if self._thread is not None:
             self._thread.join(timeout=2)

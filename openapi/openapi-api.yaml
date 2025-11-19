@@ -1,21 +1,21 @@
 openapi: 3.1.0
 info:
-  title: Multi Service Demo API
+  title: Multi Language Demo API
   version: 1.0.0
 servers:
   - url: http://localhost:8080
-    description: Java Spring service
+    description: Java Spring Boot service
   - url: http://localhost:8000
     description: Python FastAPI service
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 paths:
   /messages/java:
     get:
-      summary: List messages stored by Java
+      summary: List messages seen by Java
       operationId: listJavaMessages
       responses:
         '200':
-          description: OK
+          description: Messages stored by Java service
           content:
             application/json:
               schema:
@@ -23,7 +23,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/DemoMessage'
     post:
-      summary: Publish via Java service
+      summary: Publish a message through Java service
       operationId: publishJavaMessage
       requestBody:
         required: true
@@ -33,14 +33,14 @@ paths:
               $ref: '#/components/schemas/DemoMessage'
       responses:
         '202':
-          description: Accepted
+          description: Message accepted and forwarded to Kafka
   /messages/java/from-python:
     get:
-      summary: Messages consumed from Python topic
-      operationId: listPythonMessagesOnJava
+      summary: Messages originally emitted by Python
+      operationId: listMessagesFromPython
       responses:
         '200':
-          description: OK
+          description: Consumed records from Python topic
           content:
             application/json:
               schema:
@@ -49,11 +49,11 @@ paths:
                   $ref: '#/components/schemas/DemoMessage'
   /messages/python:
     get:
-      summary: List messages stored by Python
+      summary: List messages seen by Python
       operationId: listPythonMessages
       responses:
         '200':
-          description: OK
+          description: Messages stored by Python service
           content:
             application/json:
               schema:
@@ -61,7 +61,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/DemoMessage'
     post:
-      summary: Publish via Python service
+      summary: Publish a message through Python service
       operationId: publishPythonMessage
       requestBody:
         required: true
@@ -71,14 +71,14 @@ paths:
               $ref: '#/components/schemas/DemoMessage'
       responses:
         '202':
-          description: Accepted
+          description: Message accepted and forwarded to Kafka
   /messages/python/from-java:
     get:
-      summary: Messages consumed from Java topic
-      operationId: listJavaMessagesOnPython
+      summary: Messages produced by Java service
+      operationId: listMessagesFromJava
       responses:
         '200':
-          description: OK
+          description: Consumed records from Java topic
           content:
             application/json:
               schema:
@@ -89,5 +89,4 @@ components:
   schemas:
     DemoMessage:
       $ref: ./schemas/demo-message.schema.json
-    Item:
-      $ref: ./schemas/item.schema.json
+

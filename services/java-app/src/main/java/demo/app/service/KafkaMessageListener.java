@@ -7,18 +7,18 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PythonMessageListener {
+public class KafkaMessageListener {
 
-  private static final Log LOG = LogFactory.getLog(PythonMessageListener.class);
+  private static final Log LOG = LogFactory.getLog(KafkaMessageListener.class);
   private final MessageService messageService;
 
-  public PythonMessageListener(MessageService messageService) {
+  public KafkaMessageListener(MessageService messageService) {
     this.messageService = messageService;
   }
 
   @KafkaListener(topics = "${demo.kafka.topics.fromPython}", groupId = "java-demo-consumer")
-  public void listen(DemoMessage message) {
-    LOG.info("Java consumer received message from Python topic id=" + message.getId());
-    messageService.consumeFromPython(message);
+  public void listenFromPython(DemoMessage message) {
+    LOG.info("Received message from Python topic: " + message.getId());
+    messageService.registerPythonMessage(message);
   }
 }

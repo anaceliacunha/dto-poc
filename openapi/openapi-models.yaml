@@ -7,5 +7,3 @@ components:
   schemas:
     DemoMessage:
       $ref: ./schemas/demo-message.schema.json
-    Item:
-      $ref: ./schemas/item.schema.json

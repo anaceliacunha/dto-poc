@@ -11,33 +11,33 @@ import org.springframework.stereotype.Service;
 public class MessageService {
 
   private final KafkaTemplate<String, DemoMessage> kafkaTemplate;
-  private final InMemoryMessageStore store;
-  private final KafkaTopicProperties topicProperties;
+  private final InMemoryMessageStore messageStore;
+  private final KafkaTopicProperties kafkaTopicProperties;
 
   public MessageService(
       KafkaTemplate<String, DemoMessage> kafkaTemplate,
-      InMemoryMessageStore store,
-      KafkaTopicProperties topicProperties) {
+      InMemoryMessageStore messageStore,
+      KafkaTopicProperties kafkaTopicProperties) {
     this.kafkaTemplate = kafkaTemplate;
-    this.store = store;
-    this.topicProperties = topicProperties;
+    this.messageStore = messageStore;
+    this.kafkaTopicProperties = kafkaTopicProperties;
   }
 
   public DemoMessage publishFromJava(DemoMessage message) {
-    store.addJava(message);
-    kafkaTemplate.send(topicProperties.getTopics().getFromJava(), message);
+    messageStore.addJavaMessage(message);
+    kafkaTemplate.send(kafkaTopicProperties.getTopics().getFromJava(), message);
     return message;
   }
 
-  public void consumeFromPython(DemoMessage message) {
-    store.addPython(message);
+  public void registerPythonMessage(DemoMessage message) {
+    messageStore.addPythonMessage(message);
   }
 
-  public List<DemoMessage> listJavaMessages() {
-    return store.getJavaMessages();
+  public List<DemoMessage> getJavaMessages() {
+    return messageStore.getJavaMessages();
   }
 
-  public List<DemoMessage> listPythonMessages() {
-    return store.getPythonMessages();
+  public List<DemoMessage> getPythonMessages() {
+    return messageStore.getPythonMessages();
   }
 }

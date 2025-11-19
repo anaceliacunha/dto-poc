@@ -4,7 +4,7 @@ from collections import deque
 from threading import Lock
 from typing import Deque, List
 
-from py_models import DemoMessage
+from py_models.models.demo_message import DemoMessage
 
 
 class MessageStore:
@@ -20,16 +20,16 @@ class MessageStore:
     def add_java(self, message: DemoMessage) -> None:
         self._append(self._java_messages, message)
 
-    def list_python(self) -> List[DemoMessage]:
+    def get_python(self) -> List[DemoMessage]:
         with self._lock:
             return list(self._python_messages)
 
-    def list_java(self) -> List[DemoMessage]:
+    def get_java(self) -> List[DemoMessage]:
         with self._lock:
             return list(self._java_messages)
 
-    def _append(self, target: Deque[DemoMessage], message: DemoMessage) -> None:
+    def _append(self, collection: Deque[DemoMessage], message: DemoMessage) -> None:
         with self._lock:
-            target.appendleft(message)
-            while len(target) > self._max:
-                target.pop()
+            collection.appendleft(message)
+            while len(collection) > self._max:
+                collection.pop()

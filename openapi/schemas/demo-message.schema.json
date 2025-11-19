@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/demo-message.schema.json",
   "title": "DemoMessage",
   "type": "object",
   "required": ["id", "text", "createdAt"],
@@ -15,15 +14,20 @@
     "uuid": { "type": "string", "format": "uuid" },
     "category": { "type": "string", "enum": ["A", "B", "C", "D"] },
     "meta": {
+      "title": "DemoMessageMeta",
       "type": "object",
       "properties": {
         "locale": { "type": "string" },
-        "tags": { "type": "array", "items": { "type": "string" } },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "metrics": {
           "type": "object",
           "additionalProperties": { "type": "number" }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "items": {
       "type": "array",
@@ -31,12 +35,15 @@
     },
     "binaryData": { "type": "string", "format": "binary" },
     "notes": {
+      "title": "DemoMessageNotesOneOf",
       "oneOf": [
         { "type": "string" },
         { "type": "null" },
         {
+          "title": "DemoMessageNotes",
           "type": "object",
-          "properties": { "comment": { "type": "string" } }
+          "properties": { "comment": { "type": "string" } },
+          "additionalProperties": false
         }
       ]
     },

@@ -1,0 +1,32 @@
+{
+  "id": 777,
+  "text": "Precision round trip",
+  "createdAt": "2024-04-01T12:34:56.789Z",
+  "dateOnly": "2024-04-01",
+  "active": true,
+  "price": 0.123456789,
+  "ratio": 0.33333,
+  "uuid": "22222222-3333-4444-5555-666666666666",
+  "category": "D",
+  "meta": {
+    "locale": "en-US",
+    "tags": ["fast", "empty->", ""],
+    "metrics": {
+      "latencyMs": 12.345,
+      "availability": 0.9999
+    }
+  },
+  "items": [
+    { "code": "DEMO-1", "quantity": 0.01, "weight": 1.234 },
+    { "code": "DEMO-2", "quantity": 10.5, "weight": 99.01 }
+  ],
+  "binaryData": "UHl0aG9uQmluYXJ5",
+  "notes": {
+    "comment": "Object branch"
+  },
+  "class": "react-client",
+  "display-name": "React Panel",
+  "with space": "UI slot",
+  "snake_case": "snake_case",
+  "camelCase": "camel"
+}

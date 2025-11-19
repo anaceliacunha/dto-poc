@@ -10,16 +10,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class InMemoryMessageStore {
 
-  private static final int MAX = 100;
+  private static final int MAX_MESSAGES = 100;
   private final Deque<DemoMessage> javaMessages = new ArrayDeque<>();
   private final Deque<DemoMessage> pythonMessages = new ArrayDeque<>();
 
-  public synchronized void addJava(DemoMessage message) {
-    add(javaMessages, message);
+  public synchronized void addJavaMessage(DemoMessage message) {
+    addWithLimit(javaMessages, message);
   }
 
-  public synchronized void addPython(DemoMessage message) {
-    add(pythonMessages, message);
+  public synchronized void addPythonMessage(DemoMessage message) {
+    addWithLimit(pythonMessages, message);
   }
 
   public synchronized List<DemoMessage> getJavaMessages() {
@@ -30,9 +30,9 @@ public class InMemoryMessageStore {
     return new ArrayList<>(pythonMessages);
   }
 
-  private void add(Deque<DemoMessage> deque, DemoMessage message) {
+  private void addWithLimit(Deque<DemoMessage> deque, DemoMessage message) {
     deque.addFirst(message);
-    while (deque.size() > MAX) {
+    while (deque.size() > MAX_MESSAGES) {
       deque.removeLast();
     }
   }

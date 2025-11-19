@@ -1,0 +1,23 @@
+{
+  "id": 501,
+  "text": "",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "dateOnly": null,
+  "active": null,
+  "price": 199.99,
+  "uuid": "11111111-2222-3333-4444-555555555555",
+  "category": "B",
+  "meta": {
+    "locale": "",
+    "tags": [],
+    "metrics": {}
+  },
+  "items": null,
+  "binaryData": "",
+  "notes": null,
+  "class": "java-reserved",
+  "display-name": "",
+  "with space": "literal spacing",
+  "snake_case": "snake_from_sample",
+  "camelCase": "camelFromSample"
+}
