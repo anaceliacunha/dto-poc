@@ -445,7 +445,7 @@ const App = () => {
   return (
     <div className="app-shell">
       <header>
-        <h1>OpenAPI 3.1 Demo</h1>
+        <h1>Multi Language OpenAPI 3.1 Demo</h1>
         <p>
           Build a <strong>DemoMessage</strong> covering every type, then ship it to the Java
           or Python services via REST and Kafka.

@@ -3,7 +3,7 @@
 This workspace wires two OpenAPI 3.1 specs into React, Spring Boot 2.7 (Java 8 compatible), FastAPI, and Kafka. DTOs generated from *either* spec are forced into the same shared folders so that REST + Kafka traffic never drifts between languages.
 
 ```
-multi-lang-demo/
+dto-poc/
 ├─ openapi/
 │  ├─ openapi-api.yaml          ← REST endpoints + $ref schemas
 │  ├─ openapi-models.yaml       ← Only shared schemas
