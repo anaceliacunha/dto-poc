@@ -34,6 +34,8 @@ The `Makefile` locks down generator output destinations and now applies explicit
 ```bash
 make codegen                 # runs every generator (Java/Python/TS models + APIs)
 make codegen-java-models     # regenerate just the shared Java DTOs
+make codegen-java-api        # regenerate Spring API stubs
+make codegen-python-models   # regenerate pydantic models
 make codegen-python-api      # regenerate FastAPI stubs (BaseDefaultApi, routers, etc.)
 make codegen-react-client    # regenerate the TypeScript fetch client (models + apis)
 make codegen-ts-models       # regenerate TypeScript DTOs used by both React and other TS consumers
@@ -89,10 +91,17 @@ An Nx workspace mirrors the Makefile so you can run the same tasks via `nx`:
 ```bash
 npm install   # installs Nx locally (required once)
 
-npx nx run repo:codegen               # runs the full codegen bundle
-npx nx run repo:codegen-java-models   # or any individual codegen target
+npx nx run repo:codegen
+npx nx run repo:codegen-java-models
+npx nx run repo:codegen-java-api
+npx nx run repo:codegen-python-models
+npx nx run repo:codegen-python-api
+npx nx run repo:codegen-react-client
+npx nx run repo:codegen-ts-models
+
 npx nx run repo:kafka-up
 npx nx run repo:topics
+npx nx run repo:kafka-down
 npx nx run repo:run-java
 npx nx run repo:run-python
 npx nx run repo:run-web
