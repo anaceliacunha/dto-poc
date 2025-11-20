@@ -82,6 +82,22 @@ make run-web       # React + Vite on :5173 (rsyncs gen/react-api + gen/ts-models
 
 > Tip: when running the Python service manually, export `PYTHONPATH=../../gen/python-models` and invoke `.venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` so the generated `py_models` package stays on the import path.
 
+## Nx wrappers for Make targets
+
+An Nx workspace mirrors the Makefile so you can run the same tasks via `nx`:
+
+```bash
+npm install   # installs Nx locally (required once)
+
+npx nx run repo:codegen               # runs the full codegen bundle
+npx nx run repo:codegen-java-models   # or any individual codegen target
+npx nx run repo:kafka-up
+npx nx run repo:topics
+npx nx run repo:run-java
+npx nx run repo:run-python
+npx nx run repo:run-web
+```
+
 The React form builds `DemoMessage` payloads that exercise every schema feature, including:
 
 * binary upload (base64), enum, UUID, floats/doubles

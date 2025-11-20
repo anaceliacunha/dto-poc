@@ -16,3 +16,4 @@ webapp/react-app/dist/
 coverage/
 infra/.env
 *.log
+/.nx/

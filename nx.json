@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "npmScope": "dto",
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "nx/tasks-runners/default",
+      "options": {
+        "cacheableOperations": [
+          "codegen",
+          "codegen-java-models",
+          "codegen-java-api",
+          "codegen-python-models",
+          "codegen-python-api",
+          "codegen-ts-models",
+          "codegen-react-client",
+          "kafka-up",
+          "kafka-down",
+          "topics"
+        ]
+      }
+    }
+  },
+  "targetDefaults": {
+    "run-commands": {
+      "executor": "nx:run-commands"
+    }
+  },
+  "defaultProject": "repo"
+}
