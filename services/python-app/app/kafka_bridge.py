@@ -10,7 +10,6 @@ import logging
 from py_models.models.demo_message import DemoMessage
 
 from .config import Settings
-from .models import normalize_message_payload
 from .storage import MessageStore
 
 logger = logging.getLogger(__name__)
@@ -57,8 +56,7 @@ class KafkaBridge:
                     if self._stop_event.is_set():
                         break
                     try:
-                        payload = normalize_message_payload(record.value)
-                        dto = DemoMessage.model_validate(payload)
+                        dto = DemoMessage.model_validate(record.value)
                     except Exception as exc:  # ValidationError or others
                         logger.warning("Skipping invalid record on %s: %s", record.topic, exc)
                         continue

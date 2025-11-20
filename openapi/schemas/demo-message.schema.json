@@ -33,20 +33,8 @@
       "type": "array",
       "items": { "$ref": "./item.schema.json" }
     },
-    "binaryData": { "type": "string", "format": "binary" },
-    "notes": {
-      "title": "DemoMessageNotesOneOf",
-      "oneOf": [
-        { "type": "string" },
-        { "type": "null" },
-        {
-          "title": "DemoMessageNotes",
-          "type": "object",
-          "properties": { "comment": { "type": "string" } },
-          "additionalProperties": false
-        }
-      ]
-    },
+    "binaryData": { "type": "string", "format": "byte", "description": "Base64-encoded payload" },
+    "binaryDataFilename": { "type": "string", "description": "Original filename for binaryData" },
     "class": { "type": "string" },
     "display-name": { "type": "string" },
     "with space": { "type": "string" },

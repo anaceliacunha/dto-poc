@@ -14,8 +14,6 @@ import py_models
 import py_models.models as shared_models
 import py_models.models.demo_message as shared_demo_module
 
-from .models import DemoMessagePayload  # noqa: F401
-
 GENERATED_API_PATH = Path(__file__).resolve().parents[2] / "gen/python-api/src"
 if str(GENERATED_API_PATH) not in sys.path:
     sys.path.append(str(GENERATED_API_PATH))
@@ -80,7 +78,7 @@ app.include_router(default_api_router)
 
 
 @app.post("/messages/python", status_code=202, response_model=shared_demo_module.DemoMessage)
-async def publish_python_override(message: DemoMessagePayload) -> shared_demo_module.DemoMessage:
+async def publish_python_override(message: shared_demo_module.DemoMessage) -> shared_demo_module.DemoMessage:
     handler = BaseDefaultApi.subclasses[0]()
     await handler.publish_python_message(message)
     return message

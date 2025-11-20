@@ -21,9 +21,6 @@
     { "code": "DEMO-2", "quantity": 10.5, "weight": 99.01 }
   ],
   "binaryData": "UHl0aG9uQmluYXJ5",
-  "notes": {
-    "comment": "Object branch"
-  },
   "class": "react-client",
   "display-name": "React Panel",
   "with space": "UI slot",

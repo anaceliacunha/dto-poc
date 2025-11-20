@@ -86,8 +86,7 @@ The React form builds `DemoMessage` payloads that exercise every schema feature,
 
 * binary upload (base64), enum, UUID, floats/doubles
 * null vs empty vs missing for `meta.tags`, `items`, and optional strings (`ValueBadge` UI shows the difference)
-* `notes` union (string/null/object) and reserved names (`class`, `display-name`, `with space`)
-* sample loader button that injects the extreme payload from `openapi/samples/null-empty-sample.json`.
+* reserved names (`class`, `display-name`, `with space`)
 
 Each POST call pushes to Kafka (`demo.from.java` or `demo.from.python`) and stores a local copy. GET endpoints display:
 

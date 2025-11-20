@@ -45,6 +45,7 @@ type FormState = {
     uuid: string;
     category: Category;
     binaryData: string;
+    binaryDataFilename: string;
     classValue: string;
     displayName: string;
     withSpace: string;
@@ -52,7 +53,7 @@ type FormState = {
     camelCase: string;
 };
 
-const initialForm: FormState = {
+const createInitialForm = (): FormState => ({
     id: '1',
     text: 'Interoperability FTW',
     createdAt: dayjs().toISOString(),
@@ -65,50 +66,34 @@ const initialForm: FormState = {
             ? crypto.randomUUID()
             : '11111111-2222-3333-4444-555555555555',
     category: DemoMessageCategoryEnum.A,
-    binaryData: '',
+    binaryData: 'VGVzdCBiaW5hcnkgZGF0YQ==', // Base64 for "Test binary data"
+    binaryDataFilename: 'sample.txt',
     classValue: 'react-client',
     displayName: 'React Control Room',
     withSpace: 'Contains space text',
     snake_case: 'snake_case_value',
     camelCase: 'camelCaseValue'
-};
+});
+
+const defaultMetaLocale = 'en-US';
+const defaultMetaTagsMode: 'values' | 'empty' | 'null' = 'values';
+const defaultMetaTagsText = 'react,shared,openapi';
+const defaultMetaMetricsText = 'latency:15.4\nthroughput:0.99';
+const defaultItemsMode: 'values' | 'empty' | 'null' = 'values';
+const defaultBinaryNull = false;
+const createInitialItemRows = (): ItemRow[] => [
+    {
+        code: 'SKU-1',
+        quantity: '1',
+        weight: '0.25'
+    }
+];
 
 const emptyResponses: Responses = {
     java: [],
     javaFromPython: [],
     python: [],
     pythonFromJava: []
-};
-
-const buildSamplePayload = (): DemoMessage => {
-    const timestamp = dayjs().toISOString();
-    return {
-        id: 999,
-        text: '',
-        createdAt: timestamp,
-        dateOnly: dayjs(timestamp).format('YYYY-MM-DD'),
-        active: null,
-        price: 12345.6789,
-        ratio: 0.33333334,
-        uuid: '0f8fad5b-d9cb-469f-a165-70867728950e',
-        category: DemoMessageCategoryEnum.C,
-        meta: {
-            locale: 'pt-BR',
-            tags: [],
-            metrics: {
-                latencyMs: 15.4,
-                ratioDrift: 0.000045
-            }
-        },
-        notes: { comment: 'Using object branch for notes' },
-        // @ts-ignore
-        binaryData: 'VGVzdCBibG9iIG9wdGlvbg==', // Base64 encoded "Test blob option"
-        class: 'react-sample',
-        'display-name': '',
-        'with space': '  ',
-        snake_case: '',
-        camelCase: 'sampleCamel'
-    };
 };
 
 const parseDate = (value?: string | null): Date | undefined => {
@@ -118,6 +103,30 @@ const parseDate = (value?: string | null): Date | undefined => {
 };
 
 const parseDateOrNow = (value?: string | null): Date => parseDate(value) ?? new Date();
+
+const toDownloadBlob = (value: string): Blob => {
+    try {
+        const cleaned = value.replace(/\s/g, '');
+        const byteChars = atob(cleaned);
+        const byteNumbers = new Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i += 1) {
+            byteNumbers[i] = byteChars.charCodeAt(i);
+        }
+        return new Blob([new Uint8Array(byteNumbers)]);
+    } catch {
+        return new Blob([value], { type: 'application/octet-stream' });
+    }
+};
+
+const downloadBinaryData = (value: string, filename = 'binaryData.bin') => {
+    const blob = toDownloadBlob(value);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+};
 
 const mapGeneratedToLocal = (message: GeneratedDemoMessage): DemoMessage => {
     const { _class, displayName, withSpace, snakeCase, createdAt, dateOnly, ...rest } = message;
@@ -174,21 +183,14 @@ const formatApiError = async (error: unknown): Promise<string> => {
 };
 
 const App = () => {
-    const [form, setForm] = useState<FormState>(initialForm);
-    const [metaLocale, setMetaLocale] = useState('en-US');
-    const [metaTagsMode, setMetaTagsMode] = useState<'values' | 'empty' | 'null'>('values');
-    const [metaTagsText, setMetaTagsText] = useState('react,shared,openapi');
-    const [metaMetricsText, setMetaMetricsText] = useState('latency:15.4\nthroughput:0.99');
-    const [itemsMode, setItemsMode] = useState<'values' | 'empty' | 'null'>('values');
-    const [itemRows, setItemRows] = useState<ItemRow[]>([{
-        code: 'SKU-1',
-        quantity: '1',
-        weight: '0.25'
-    }]);
-    const [notesMode, setNotesMode] = useState<'string' | 'object' | 'null'>('string');
-    const [notesValue, setNotesValue] = useState('Plain string note');
-    const [notesComment, setNotesComment] = useState('Nested comment note');
-    const [binaryNull, setBinaryNull] = useState(false);
+    const [form, setForm] = useState<FormState>(createInitialForm);
+    const [metaLocale, setMetaLocale] = useState(defaultMetaLocale);
+    const [metaTagsMode, setMetaTagsMode] = useState<'values' | 'empty' | 'null'>(defaultMetaTagsMode);
+    const [metaTagsText, setMetaTagsText] = useState(defaultMetaTagsText);
+    const [metaMetricsText, setMetaMetricsText] = useState(defaultMetaMetricsText);
+    const [itemsMode, setItemsMode] = useState<'values' | 'empty' | 'null'>(defaultItemsMode);
+    const [itemRows, setItemRows] = useState<ItemRow[]>(createInitialItemRows);
+    const [binaryNull, setBinaryNull] = useState(defaultBinaryNull);
     const [responses, setResponses] = useState<Responses>(emptyResponses);
     const [status, setStatus] = useState<string>('');
 
@@ -255,14 +257,6 @@ const App = () => {
         return parsed.length ? parsed as Item[]: [];
     };
 
-    const buildNotes = (): DemoMessage['notes'] => {
-        if (notesMode === 'null') return null;
-        if (notesMode === 'object') {
-            return { comment: notesComment };
-        }
-        return notesValue;
-    };
-
     const buildPayload = (): DemoMessage => {
         const payload: DemoMessage = {
             id: Number(form.id) || 0,
@@ -279,7 +273,7 @@ const App = () => {
             items: buildItems(),
             // @ts-ignore
             binaryData: binaryNull ? undefined : form.binaryData,
-            notes: buildNotes(),
+            binaryDataFilename: binaryNull || !form.binaryDataFilename ? undefined : form.binaryDataFilename,
             class: form.classValue,
             'display-name': form.displayName,
             'with space': form.withSpace,
@@ -316,6 +310,7 @@ const App = () => {
         reader.onload = () => {
             const base64 = (reader.result as string).split(',')[1];
             handleFormChange('binaryData', base64 || '');
+            handleFormChange('binaryDataFilename', file.name);
             setBinaryNull(false);
         };
         reader.readAsDataURL(file);
@@ -359,100 +354,15 @@ const App = () => {
         }
     };
 
-    const loadSample = (reset?: boolean) => {
-        let sample: DemoMessage | FormState;
-        if (reset) {
-            sample = initialForm;
-        } else {
-            sample = buildSamplePayload();
-        }
-
-        // Type narrowing for DemoMessage-specific properties
-        const isDemoMessage = (obj: any): obj is DemoMessage =>
-            'meta' in obj || 'notes' in obj || 'items' in obj;
-
-        setForm({
-            id: sample.id.toString(),
-            text: sample.text,
-            createdAt: sample.createdAt,
-            dateOnly: sample.dateOnly ?? '',
-            active: 'null',
-            price: sample.price?.toString() ?? '',
-            ratio: sample.ratio?.toString() ?? '',
-            uuid: sample.uuid ?? '',
-            category: sample.category ?? DemoMessageCategoryEnum.A,
-            // @ts-ignore
-            binaryData: sample.binaryData ?? '',
-            classValue: 'classValue' in sample ? sample.classValue : (sample as DemoMessage).class ?? '',
-            displayName: 'displayName' in sample ? sample.displayName : (sample as DemoMessage)['display-name'] ?? '',
-            withSpace: 'withSpace' in sample ? sample.withSpace : (sample as DemoMessage)['with space'] ?? '',
-            snake_case: sample.snake_case ?? '',
-            camelCase: sample.camelCase ?? ''
-        });
-
-        if (isDemoMessage(sample)) {
-            setMetaLocale(sample.meta?.locale ?? '');
-            const tags = sample.meta?.tags;
-            if (tags === null) {
-                setMetaTagsMode('null');
-                setMetaTagsText('');
-            } else if (tags && tags.length === 0) {
-                setMetaTagsMode('empty');
-                setMetaTagsText('');
-            } else {
-                setMetaTagsMode('values');
-                setMetaTagsText((tags ?? []).join(', '));
-            }
-            setMetaMetricsText(
-                sample.meta?.metrics
-                    ? Object.entries(sample.meta.metrics)
-                        .map(([key, value]) => `${key}:${value}`)
-                        .join('\n')
-                    : ''
-            );
-            if (sample.items === null) {
-                setItemsMode('null');
-                setItemRows([{ code: '', quantity: '', weight: '' }]);
-            } else if (sample.items?.length === 0) {
-                setItemsMode('empty');
-                setItemRows([{ code: '', quantity: '', weight: '' }]);
-            } else {
-                setItemsMode('values');
-                setItemRows(
-                    sample.items?.map((item: Item) => ({
-                        code: item.code,
-                        quantity: item.quantity?.toString() ?? '',
-                        weight: item.weight?.toString() ?? ''
-                    })) ?? []
-                );
-            }
-            if (sample.notes === null) {
-                setNotesMode('null');
-                setNotesValue('');
-                setNotesComment('');
-            } else if (typeof sample.notes === 'string') {
-                setNotesMode('string');
-                setNotesValue(sample.notes);
-                setNotesComment('');
-            } else {
-                setNotesMode('object');
-                setNotesComment(sample.notes?.comment ?? '');
-                setNotesValue('');
-            }
-            setBinaryNull(sample.binaryData === null);
-        } else {
-            // FormState fallback
-            setMetaLocale('');
-            setMetaTagsMode('values');
-            setMetaTagsText('');
-            setMetaMetricsText('');
-            setItemsMode('values');
-            setItemRows([{ code: '', quantity: '', weight: '' }]);
-            setNotesMode('string');
-            setNotesValue('');
-            setNotesComment('');
-            setBinaryNull(false);
-        }
+    const resetForm = () => {
+        setForm(createInitialForm());
+        setMetaLocale(defaultMetaLocale);
+        setMetaTagsMode(defaultMetaTagsMode);
+        setMetaTagsText(defaultMetaTagsText);
+        setMetaMetricsText(defaultMetaMetricsText);
+        setItemsMode(defaultItemsMode);
+        setItemRows(createInitialItemRows());
+        setBinaryNull(defaultBinaryNull);
     };
 
 
@@ -460,7 +370,7 @@ const App = () => {
         refreshAll();
     }, []);
 
-    const payloadPreview = useMemo(() => JSON.stringify(buildPayload(), null, 2), [form, metaLocale, metaTagsMode, metaTagsText, metaMetricsText, itemsMode, itemRows, notesMode, notesValue, notesComment, binaryNull]);
+    const payloadPreview = useMemo(() => JSON.stringify(buildPayload(), null, 2), [form, metaLocale, metaTagsMode, metaTagsText, metaMetricsText, itemsMode, itemRows, binaryNull]);
 
     return (
         <div className="app-shell">
@@ -473,10 +383,7 @@ const App = () => {
             </header>
 
             <div className="actions">
-                <button className="sample-btn" type="button" onClick={() => loadSample()}>
-                    Load null/empty sample
-                </button>
-                <button className="sample-btn" type="button" onClick={() => loadSample(true)}>
+                <button className="sample-btn" type="button" onClick={resetForm}>
                     Reset to initial values
                 </button>
             </div>
@@ -625,92 +532,70 @@ const App = () => {
                         </div>
                     </div>
 
-                    <div className="grid" style={{ marginTop: '1rem' }}>
-                        <div>
-                            <div className="flex-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3>Items ({itemsMode})</h3>
-                                <div className="flex-row">
-                                    {(['values', 'empty', 'null'] as const).map((mode) => (
-                                        <button
-                                            key={mode}
-                                            type="button"
-                                            className={clsx('sample-btn', { active: itemsMode === mode })}
-                                            onClick={() => setItemsMode(mode)}
-                                        >
-                                            {mode}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            {itemsMode === 'values' && (
-                                <div className="items-list">
-                                    {itemRows.map((row, index) => (
-                                        <div key={index}>
-                                            <div className="field-group">
-                                                <label>
-                                                    code
-                                                    <input value={row.code} onChange={(event) => handleItemChange(index, 'code', event.target.value)} />
-                                                </label>
-                                                <label>
-                                                    quantity
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={row.quantity}
-                                                        onChange={(event) => handleItemChange(index, 'quantity', event.target.value)}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    weight
-                                                    <input
-                                                        type="number"
-                                                        step="0.001"
-                                                        value={row.weight}
-                                                        onChange={(event) => handleItemChange(index, 'weight', event.target.value)}
-                                                    />
-                                                </label>
-                                            </div>
-                                            <div className="actions">
-                                                <button type="button" className="sample-btn" onClick={() => removeItemRow(index)}>
-                                                    Remove
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <button type="button" className="sample-btn" onClick={addItemRow}>
-                                        Add item
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <h3>Notes</h3>
+                    <div style={{ marginTop: '1rem' }}>
+                        <div className="flex-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3>Items ({itemsMode})</h3>
                             <div className="flex-row">
-                                {(['string', 'object', 'null'] as const).map((mode) => (
+                                {(['values', 'empty', 'null'] as const).map((mode) => (
                                     <button
                                         key={mode}
                                         type="button"
-                                        className={clsx('sample-btn', { active: notesMode === mode })}
-                                        onClick={() => setNotesMode(mode)}
+                                        className={clsx('sample-btn', { active: itemsMode === mode })}
+                                        onClick={() => setItemsMode(mode)}
                                     >
                                         {mode}
                                     </button>
                                 ))}
                             </div>
-                            {notesMode === 'string' && (
-                                <textarea value={notesValue} onChange={(event) => setNotesValue(event.target.value)} />
-                            )}
-                            {notesMode === 'object' && (
-                                <textarea value={notesComment} onChange={(event) => setNotesComment(event.target.value)} placeholder="comment text" />
-                            )}
                         </div>
+                        {itemsMode === 'values' && (
+                            <div className="items-list">
+                                {itemRows.map((row, index) => (
+                                    <div key={index}>
+                                        <div className="field-group">
+                                            <label>
+                                                code
+                                                <input value={row.code} onChange={(event) => handleItemChange(index, 'code', event.target.value)} />
+                                            </label>
+                                            <label>
+                                                quantity
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={row.quantity}
+                                                    onChange={(event) => handleItemChange(index, 'quantity', event.target.value)}
+                                                />
+                                            </label>
+                                            <label>
+                                                weight
+                                                <input
+                                                    type="number"
+                                                    step="0.001"
+                                                    value={row.weight}
+                                                    onChange={(event) => handleItemChange(index, 'weight', event.target.value)}
+                                                />
+                                            </label>
+                                        </div>
+                                        <div className="actions">
+                                            <button type="button" className="sample-btn" onClick={() => removeItemRow(index)}>
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button type="button" className="sample-btn" onClick={addItemRow}>
+                                    Add item
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid" style={{ marginTop: '1rem' }}>
                         <div>
                             <label>
                                 binaryData (base64)
-                                <textarea
+                                {!binaryNull && <textarea
+                                    style={{ maxHeight: '8rem', overflow: 'auto', maxWidth: '100%' }}
                                     value={form.binaryData}
                                     onChange={(event) => {
                                         setBinaryNull(false);
@@ -718,15 +603,24 @@ const App = () => {
                                     }}
                                     placeholder="Paste base64 or upload a file"
                                     disabled={binaryNull}
+                                />}
+                            </label>
+                            <label>
+                                binaryData filename
+                                <input
+                                    value={form.binaryDataFilename}
+                                    onChange={(event) => handleFormChange('binaryDataFilename', event.target.value)}
+                                    placeholder="original-filename.ext"
+                                    disabled={binaryNull}
                                 />
                             </label>
                             <div className="flex-row">
-                                <input type="file" onChange={handleBinaryFile} />
+                                <input type="file" onChange={handleBinaryFile} disabled={binaryNull} />
                                 <button type="button" className="sample-btn" onClick={() => setBinaryNull(true)}>
                                     Send null binary
                                 </button>
                                 <button type="button" className="sample-btn" onClick={() => setBinaryNull(false)}>
-                                    Keep string
+                                    Send binary data
                                 </button>
                             </div>
                         </div>
@@ -835,6 +729,10 @@ const ResponseSection = ({
 };
 
 const MessageCard = ({ message }: { message: DemoMessage }) => {
+    const hasBinaryData = message.binaryData !== null && typeof message.binaryData !== 'undefined' && message.binaryData !== '';
+    const downloadName =
+        (message as DemoMessage & { binaryDataFilename?: string }).binaryDataFilename ||
+        `binary-${message.id}.bin`;
     return (
         <div className="card" style={{ padding: '1rem', marginBottom: '0.8rem' }}>
             <div className="flex-row" style={{ justifyContent: 'space-between' }}>
@@ -850,10 +748,20 @@ const MessageCard = ({ message }: { message: DemoMessage }) => {
                 <ValueBadge value={message.meta?.tags} label="meta.tags" />
                 <ValueBadge value={message.items} label="items" />
                 <ValueBadge value={message.binaryData} label="binary" />
-                <ValueBadge value={message.notes} label="notes" />
                 <ValueBadge value={message['display-name']} label="display-name" />
                 <ValueBadge value={message['with space']} label="with space" />
             </div>
+            {hasBinaryData && (
+                <div className="actions" style={{ marginTop: '0.5rem' }}>
+                    <button
+                        type="button"
+                        className="sample-btn"
+                        onClick={() => downloadBinaryData(message.binaryData as string, downloadName)}
+                    >
+                        Download binaryData
+                    </button>
+                </div>
+            )}
             <pre style={{ marginTop: '0.5rem', maxHeight: 260, overflow: 'auto' }}>{JSON.stringify(message, null, 2)}</pre>
         </div>
     );
