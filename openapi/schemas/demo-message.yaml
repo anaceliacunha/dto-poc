@@ -69,7 +69,7 @@ components:
         class:
           type: string
         display-name:
-          type: string
+          type: number
         with space:
           type: string
         snake_case:
