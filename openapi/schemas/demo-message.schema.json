@@ -40,7 +40,6 @@
             "items": { "$ref": "./item.schema.json#/components/schemas/Item" }
           },
           "binaryData": { "type": "string", "format": "byte", "description": "Base64-encoded payload" },
-          "binaryDataFilename": { "type": "string", "description": "Original filename for binaryData" },
           "class": { "type": "string" },
           "display-name": { "type": "string" },
           "with space": { "type": "string" },
