@@ -35,8 +35,6 @@ jobs:
           cp -R openapi/. .openapi-diff/head/openapi/
           touch .openapi-diff/README.md
 
-          npm install -g @apidevtools/swagger-cli@4
-
           for SPEC in "${SPECS[@]}"; do
             BASENAME="$(basename "$SPEC" .yaml)"
             BASE_SPEC=".openapi-diff/base/${SPEC}"
@@ -44,8 +42,8 @@ jobs:
             BUNDLED_BASE=".openapi-diff/bundled/${BASENAME}-base.yaml"
             BUNDLED_HEAD=".openapi-diff/bundled/${BASENAME}-head.yaml"
 
-            npx swagger-cli bundle --dereference "$BASE_SPEC" -o "$BUNDLED_BASE"
-            npx swagger-cli bundle --dereference "$HEAD_SPEC" -o "$BUNDLED_HEAD"
+            npx @redocly/cli@latest bundle "$BASE_SPEC" --dereferenced --output "$BUNDLED_BASE"
+            npx @redocly/cli@latest bundle "$HEAD_SPEC" --dereferenced --output "$BUNDLED_HEAD"
 
             echo "Comparing ${SPEC}"
             docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
