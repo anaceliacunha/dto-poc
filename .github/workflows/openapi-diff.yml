@@ -17,28 +17,29 @@ jobs:
       - name: Check OpenAPI breaking changes
         run: |
           set -euo pipefail
-          mkdir -p .openapi-diff
+          mkdir -p .openapi-diff/base .openapi-diff/head
 
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.sha }}"
 
           SPECS=(openapi/openapi-api.yaml openapi/openapi-models.yaml)
 
+          # Materialize base revision of the entire openapi/ tree
+          while IFS= read -r FILE; do
+            DEST=".openapi-diff/base/${FILE#openapi/}"
+            mkdir -p "$(dirname "$DEST")"
+            git show "${BASE_SHA}:${FILE}" > "$DEST"
+          done < <(git ls-tree -r --name-only "${BASE_SHA}" openapi)
+
+          # Copy current revision of the openapi/ tree
+          cp -R openapi/. .openapi-diff/head/
+
           for SPEC in "${SPECS[@]}"; do
-            BASENAME="$(basename "$SPEC")"
-            BASE_OUT=".openapi-diff/${BASENAME}.base.yaml"
-            HEAD_OUT=".openapi-diff/${BASENAME}.head.yaml"
-
-            # Extract base version from the target branch
-            git show "${BASE_SHA}:${SPEC}" > "${BASE_OUT}"
-            # Copy current PR version
-            cp "${SPEC}" "${HEAD_OUT}"
-
             echo "Comparing ${SPEC}"
             docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
-              "${BASE_OUT}" "${HEAD_OUT}" \
+              ".openapi-diff/base/${SPEC#openapi/}" ".openapi-diff/head/${SPEC#openapi/}" \
               --fail-on-incompatible \
-              --markdown ".openapi-diff/${BASENAME}.diff.md"
+              --markdown ".openapi-diff/$(basename "$SPEC").diff.md"
           done
 
       - name: Upload diff reports
