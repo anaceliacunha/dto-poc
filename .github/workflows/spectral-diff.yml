@@ -1,0 +1,113 @@
+name: Spectral OpenAPI Compatibility Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'openapi/**'
+
+jobs:
+  spectral-diff:
+    runs-on: ubuntu-latest
+    name: Check OpenAPI with Spectral
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+      
+      - name: Create Spectral ruleset for backward compatibility
+        run: |
+          cat > .spectral.yml << 'EOF'
+          extends: spectral:oas
+          rules:
+            # Ensure no breaking changes
+            oas3-schema:
+              severity: error
+            operation-operationId:
+              severity: error
+            operation-parameters:
+              severity: error
+            operation-tag-defined:
+              severity: warn
+          EOF
+      
+      - name: Get base branch
+        id: base-branch
+        run: |
+          echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+      
+      - name: Lint current OpenAPI files
+        id: lint-current
+        continue-on-error: true
+        run: |
+          echo "Linting current OpenAPI files with Spectral..."
+          echo ""
+          
+          echo "========================================="
+          echo "Checking openapi-api.yaml..."
+          echo "========================================="
+          spectral lint openapi/openapi-api.yaml --format stylish || true
+          
+          echo ""
+          echo "========================================="
+          echo "Checking openapi-models.yaml..."
+          echo "========================================="
+          spectral lint openapi/openapi-models.yaml --format stylish || true
+          
+          echo ""
+          echo "========================================="
+          echo "Checking schema files..."
+          echo "========================================="
+          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+            if [ -f "$schema" ]; then
+              echo "Checking $schema..."
+              spectral lint "$schema" --format stylish || true
+            fi
+          done
+      
+      - name: Compare with base branch
+        id: compare-base
+        continue-on-error: true
+        run: |
+          echo "Comparing with base branch..."
+          git fetch origin ${{ steps.base-branch.outputs.base_ref }}
+          
+          # Check openapi-api.yaml
+          if git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-api.yaml > /tmp/base-openapi-api.yaml 2>/dev/null; then
+            echo ""
+            echo "========================================="
+            echo "Base version of openapi-api.yaml:"
+            echo "========================================="
+            spectral lint /tmp/base-openapi-api.yaml --format stylish || true
+          fi
+          
+          # Check openapi-models.yaml
+          if git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-models.yaml > /tmp/base-openapi-models.yaml 2>/dev/null; then
+            echo ""
+            echo "========================================="
+            echo "Base version of openapi-models.yaml:"
+            echo "========================================="
+            spectral lint /tmp/base-openapi-models.yaml --format stylish || true
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Spectral OpenAPI Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ Spectral performs OpenAPI linting and validation." >> $GITHUB_STEP_SUMMARY
+          echo "Review the output above for any errors or warnings." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "For breaking change detection, refer to the openapi-oasdiff workflow." >> $GITHUB_STEP_SUMMARY

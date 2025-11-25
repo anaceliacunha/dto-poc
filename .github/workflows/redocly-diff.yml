@@ -1,0 +1,82 @@
+name: OpenAPI Backward Compatibility - Redocly
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'openapi/**'
+
+jobs:
+  redocly-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli
+      
+      - name: Create Redocly config
+        run: |
+          cat > .redocly.yaml << 'EOF'
+          apis:
+            main:
+              root: openapi/openapi-api.yaml
+            models:
+              root: openapi/openapi-models.yaml
+          
+          rules:
+            no-unresolved-refs: error
+            no-unused-components: warn
+            operation-operationId: error
+            operation-summary: warn
+            path-not-include-query: error
+            path-parameters-defined: error
+          EOF
+      
+      - name: Lint current OpenAPI files
+        run: |
+          echo "### Linting current OpenAPI files"
+          redocly lint openapi/openapi-api.yaml
+          redocly lint openapi/openapi-models.yaml
+      
+      - name: Checkout base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git checkout origin/${{ github.base_ref }} -- openapi/ || echo "No openapi folder in base branch"
+          mkdir -p /tmp/openapi-base
+          cp -r openapi/* /tmp/openapi-base/ 2>/dev/null || echo "No files to copy"
+          git checkout ${{ github.head_ref }}
+      
+      - name: Compare with base - API
+        if: hashFiles('/tmp/openapi-base/openapi-api.yaml') != ''
+        continue-on-error: true
+        run: |
+          echo "### Comparing openapi-api.yaml"
+          echo "Running: redocly diff /tmp/openapi-base/openapi-api.yaml openapi/openapi-api.yaml"
+          redocly diff /tmp/openapi-base/openapi-api.yaml openapi/openapi-api.yaml || true
+      
+      - name: Compare with base - Models
+        if: hashFiles('/tmp/openapi-base/openapi-models.yaml') != ''
+        continue-on-error: true
+        run: |
+          echo "### Comparing openapi-models.yaml"
+          echo "Running: redocly diff /tmp/openapi-base/openapi-models.yaml openapi/openapi-models.yaml"
+          redocly diff /tmp/openapi-base/openapi-models.yaml openapi/openapi-models.yaml || true
+      
+      - name: Summary
+        run: |
+          echo "✅ Redocly validation complete"
+          echo ""
+          echo "📝 Note: Redocly CLI provides linting and diff comparison."
+          echo "For strict breaking change detection, use the oasdiff workflow."
