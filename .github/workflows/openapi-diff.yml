@@ -54,12 +54,15 @@ jobs:
             exit 0
           }
           
-          # Run oasdiff breaking check
+          # Run oasdiff breaking check with detailed output
+          echo "Running oasdiff breaking check..."
           if oasdiff breaking /tmp/base-openapi-api.yaml openapi/openapi-api.yaml --fail-on ERR; then
             echo "✅ No breaking changes in openapi-api.yaml"
             echo "api_breaking=false" >> $GITHUB_OUTPUT
           else
             echo "❌ Breaking changes detected in openapi-api.yaml"
+            echo "Details:"
+            oasdiff breaking /tmp/base-openapi-api.yaml openapi/openapi-api.yaml || true
             echo "api_breaking=true" >> $GITHUB_OUTPUT
             exit 1
           fi
