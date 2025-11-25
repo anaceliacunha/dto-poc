@@ -49,6 +49,7 @@ jobs:
             docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
               "$BUNDLED_BASE" "$BUNDLED_HEAD" \
               --fail-on-incompatible \
+              --fail-on-changed \
               --markdown ".openapi-diff/$(basename "$SPEC").diff.md"
           done
 
