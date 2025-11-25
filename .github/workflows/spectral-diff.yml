@@ -64,6 +64,9 @@ jobs:
               git show origin/${{ github.base_ref }}:openapi/schemas/$filename > /tmp/openapi-base/schemas/$filename 2>/dev/null || echo "No $filename in base"
             fi
           done
+          
+          # Copy Spectral ruleset to base directory
+          cp .spectral.yml /tmp/openapi-base/
       
       - name: Lint base branch files
         continue-on-error: true
