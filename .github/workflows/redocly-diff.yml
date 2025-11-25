@@ -43,30 +43,53 @@ jobs:
             path-not-include-query: error
             path-parameters-defined: error
           EOF
-            
-      - name: Checkout base branch
+      
+      - name: Lint current OpenAPI files
+        run: |
+          echo "### Linting current OpenAPI files"
+          redocly lint openapi/openapi-api.yaml
+          redocly lint openapi/openapi-models.yaml
+      
+      - name: Get base branch files
         run: |
           git fetch origin ${{ github.base_ref }}
-          git checkout origin/${{ github.base_ref }} -- openapi/ || echo "No openapi folder in base branch"
-          mkdir -p /tmp/openapi-base
-          cp -r openapi/* /tmp/openapi-base/ 2>/dev/null || echo "No files to copy"
-          git checkout ${{ github.head_ref }}
+          mkdir -p /tmp/openapi-base/schemas
+          
+          # Copy base branch files to temp directory using git show
+          git show origin/${{ github.base_ref }}:openapi/openapi-api.yaml > /tmp/openapi-base/openapi-api.yaml 2>/dev/null || echo "No openapi-api.yaml in base"
+          git show origin/${{ github.base_ref }}:openapi/openapi-models.yaml > /tmp/openapi-base/openapi-models.yaml 2>/dev/null || echo "No openapi-models.yaml in base"
+          
+          # Copy schema files
+          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+            if [ -f "$schema" ]; then
+              filename=$(basename "$schema")
+              git show origin/${{ github.base_ref }}:openapi/schemas/$filename > /tmp/openapi-base/schemas/$filename 2>/dev/null || echo "No $filename in base"
+            fi
+          done
       
       - name: Compare with base - API
-        if: hashFiles('/tmp/openapi-base/openapi-api.yaml') != ''
         continue-on-error: true
         run: |
-          echo "### Comparing openapi-api.yaml"
-          echo "Running: redocly diff /tmp/openapi-base/openapi-api.yaml openapi/openapi-api.yaml"
-          redocly diff /tmp/openapi-base/openapi-api.yaml openapi/openapi-api.yaml || true
+          if [ -f /tmp/openapi-base/openapi-api.yaml ]; then
+            echo "========================================="
+            echo "Comparing openapi-api.yaml"
+            echo "========================================="
+            redocly diff /tmp/openapi-base/openapi-api.yaml openapi/openapi-api.yaml --format=stylish
+          else
+            echo "No base version of openapi-api.yaml found"
+          fi
       
       - name: Compare with base - Models
-        if: hashFiles('/tmp/openapi-base/openapi-models.yaml') != ''
         continue-on-error: true
         run: |
-          echo "### Comparing openapi-models.yaml"
-          echo "Running: redocly diff /tmp/openapi-base/openapi-models.yaml openapi/openapi-models.yaml"
-          redocly diff /tmp/openapi-base/openapi-models.yaml openapi/openapi-models.yaml || true
+          if [ -f /tmp/openapi-base/openapi-models.yaml ]; then
+            echo "========================================="
+            echo "Comparing openapi-models.yaml"
+            echo "========================================="
+            redocly diff /tmp/openapi-base/openapi-models.yaml openapi/openapi-models.yaml --format=stylish
+          else
+            echo "No base version of openapi-models.yaml found"
+          fi
       
       - name: Summary
         run: |

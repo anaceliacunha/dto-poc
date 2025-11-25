@@ -33,34 +33,57 @@ jobs:
           extends: spectral:oas
           EOF
       
-      - name: Get base branch
-        id: base-branch
-        run: |
-          echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
-      
-      - name: Compare with base branch
-        id: compare-base
+      - name: Lint current OpenAPI files
         continue-on-error: true
         run: |
-          echo "Comparing with base branch..."
-          git fetch origin ${{ steps.base-branch.outputs.base_ref }}
+          echo "========================================="
+          echo "Linting current openapi-api.yaml"
+          echo "========================================="
+          spectral lint openapi/openapi-api.yaml --format stylish || true
           
-          # Check openapi-api.yaml
-          if git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-api.yaml > /tmp/base-openapi-api.yaml 2>/dev/null; then
+          echo ""
+          echo "========================================="
+          echo "Linting current openapi-models.yaml"
+          echo "========================================="
+          spectral lint openapi/openapi-models.yaml --format stylish || true
+      
+      - name: Get base branch files
+        continue-on-error: true
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          mkdir -p /tmp/openapi-base/schemas
+          
+          # Copy base branch files to temp directory
+          git show origin/${{ github.base_ref }}:openapi/openapi-api.yaml > /tmp/openapi-base/openapi-api.yaml 2>/dev/null || echo "No openapi-api.yaml in base"
+          git show origin/${{ github.base_ref }}:openapi/openapi-models.yaml > /tmp/openapi-base/openapi-models.yaml 2>/dev/null || echo "No openapi-models.yaml in base"
+          
+          # Copy schema files for reference resolution
+          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+            if [ -f "$schema" ]; then
+              filename=$(basename "$schema")
+              git show origin/${{ github.base_ref }}:openapi/schemas/$filename > /tmp/openapi-base/schemas/$filename 2>/dev/null || echo "No $filename in base"
+            fi
+          done
+      
+      - name: Lint base branch files
+        continue-on-error: true
+        run: |
+          cd /tmp/openapi-base
+          
+          if [ -f openapi-api.yaml ]; then
             echo ""
             echo "========================================="
             echo "Base version of openapi-api.yaml:"
             echo "========================================="
-            spectral lint /tmp/base-openapi-api.yaml --format stylish || true
+            spectral lint openapi-api.yaml --format stylish || true
           fi
           
-          # Check openapi-models.yaml
-          if git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-models.yaml > /tmp/base-openapi-models.yaml 2>/dev/null; then
+          if [ -f openapi-models.yaml ]; then
             echo ""
             echo "========================================="
             echo "Base version of openapi-models.yaml:"
             echo "========================================="
-            spectral lint /tmp/base-openapi-models.yaml --format stylish || true
+            spectral lint openapi-models.yaml --format stylish || true
           fi
       
       - name: Summary
