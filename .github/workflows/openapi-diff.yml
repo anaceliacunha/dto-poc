@@ -17,7 +17,7 @@ jobs:
       - name: Check OpenAPI breaking changes
         run: |
           set -euo pipefail
-          mkdir -p .openapi-diff/base/openapi .openapi-diff/head/openapi
+          mkdir -p .openapi-diff/base/openapi .openapi-diff/head/openapi .openapi-diff/bundled
 
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.sha }}"
@@ -35,10 +35,21 @@ jobs:
           cp -R openapi/. .openapi-diff/head/openapi/
           touch .openapi-diff/README.md
 
+          npm install -g @apidevtools/swagger-cli@4
+
           for SPEC in "${SPECS[@]}"; do
+            BASENAME="$(basename "$SPEC" .yaml)"
+            BASE_SPEC=".openapi-diff/base/${SPEC}"
+            HEAD_SPEC=".openapi-diff/head/${SPEC}"
+            BUNDLED_BASE=".openapi-diff/bundled/${BASENAME}-base.yaml"
+            BUNDLED_HEAD=".openapi-diff/bundled/${BASENAME}-head.yaml"
+
+            npx swagger-cli bundle --dereference "$BASE_SPEC" -o "$BUNDLED_BASE"
+            npx swagger-cli bundle --dereference "$HEAD_SPEC" -o "$BUNDLED_HEAD"
+
             echo "Comparing ${SPEC}"
             docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
-              ".openapi-diff/base/${SPEC}" ".openapi-diff/head/${SPEC}" \
+              "$BUNDLED_BASE" "$BUNDLED_HEAD" \
               --fail-on-incompatible \
               --markdown ".openapi-diff/$(basename "$SPEC").diff.md"
           done
