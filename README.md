@@ -57,6 +57,7 @@ Spring’s `build-helper-maven-plugin` automatically adds the Java shared folder
 * Python 3.11 (adjust commands if your interpreter uses a different alias)
 * Node 18+
 * Podman + Podman Compose (`brew install podman podman-compose`; swap back to Docker Compose if you prefer Docker)
+* openapi-generator CLI (7.17.0 or newer) available on your PATH (`brew install openapi-generator` or `npm i -g @openapitools/openapi-generator-cli`) for the codegen targets
 
 Install service deps once:
 
