@@ -8,8 +8,7 @@ jobs:
   bc-check:
     runs-on: ubuntu-latest
     env:
-      SPEC_DIR: openapi
-      SPEC_EXTS: 'ya?ml|json'
+      SPEC_REGEX: '^openapi/openapi-[^/]+\.ya?ml$'
     steps:
       - name: Checkout PR branch (with full history)
         uses: actions/checkout@v4
@@ -26,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           { git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
-              | grep -E "^(${SPEC_DIR})/.*\.(${SPEC_EXTS})$" \
+              | grep -E "${SPEC_REGEX}" \
               || true; } > changed_specs.txt
 
           # Ensure file exists even if empty
