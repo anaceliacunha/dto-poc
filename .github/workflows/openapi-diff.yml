@@ -160,7 +160,9 @@ jobs:
             if [ -f "$schema" ]; then
               filename=$(basename "$schema")
               echo ""
+              echo "========================================="
               echo "Checking $schema..."
+              echo "========================================="
               
               # Check if base version exists
               if [ ! -f /tmp/openapi-base/schemas/$filename ]; then
@@ -171,17 +173,18 @@ jobs:
               # Run oasdiff on individual schema file with --composed flag
               # Run from openapi-base/schemas to resolve references correctly
               cd /tmp/openapi-base/schemas
-              if oasdiff breaking $filename "$GITHUB_WORKSPACE/$schema" --composed --format text --fail-on WARN 2>&1; then
+              oasdiff breaking $filename "$GITHUB_WORKSPACE/$schema" --composed --format text --fail-on WARN
+              exit_code=$?
+              
+              if [ $exit_code -eq 0 ]; then
                 echo "✅ No breaking changes in $filename"
+              elif [ $exit_code -eq 1 ]; then
+                echo "❌ Breaking changes detected in $filename"
+                schemas_have_breaking=true
               else
-                exit_code=$?
-                if [ $exit_code -eq 1 ]; then
-                  echo "❌ Breaking changes detected in $filename"
-                  schemas_have_breaking=true
-                else
-                  echo "⚠️ Could not validate $filename (might not be a complete OpenAPI spec)"
-                fi
+                echo "⚠️ Could not validate $filename (exit code: $exit_code)"
               fi
+              
               cd "$GITHUB_WORKSPACE"
             fi
           done
