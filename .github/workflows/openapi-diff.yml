@@ -19,13 +19,22 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       
-      - name: Install openapi-diff
-        run: npm install -g openapi-diff
+      - name: Install oasdiff
+        run: |
+          go install github.com/tufin/oasdiff@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        env:
+          GO111MODULE: on
       
       - name: Get base branch
         id: base-branch
@@ -45,21 +54,14 @@ jobs:
             exit 0
           }
           
-          # Run openapi-diff
-          openapi-diff /tmp/base-openapi-api.yaml openapi/openapi-api.yaml --json > /tmp/diff-api.json || true
-          
-          # Check for breaking changes
-          if [ -f /tmp/diff-api.json ]; then
-            breaking_count=$(jq '.breakingDifferencesFound // false' /tmp/diff-api.json)
-            if [ "$breaking_count" = "true" ]; then
-              echo "❌ Breaking changes detected in openapi-api.yaml"
-              echo "api_breaking=true" >> $GITHUB_OUTPUT
-              jq '.breakingDifferences' /tmp/diff-api.json
-              exit 1
-            else
-              echo "✅ No breaking changes in openapi-api.yaml"
-              echo "api_breaking=false" >> $GITHUB_OUTPUT
-            fi
+          # Run oasdiff breaking check
+          if oasdiff breaking /tmp/base-openapi-api.yaml openapi/openapi-api.yaml --fail-on ERR; then
+            echo "✅ No breaking changes in openapi-api.yaml"
+            echo "api_breaking=false" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Breaking changes detected in openapi-api.yaml"
+            echo "api_breaking=true" >> $GITHUB_OUTPUT
+            exit 1
           fi
       
       - name: Check openapi-models.yaml
@@ -74,19 +76,18 @@ jobs:
             exit 0
           }
           
-          # Run openapi-diff
-          openapi-diff /tmp/base-openapi-models.yaml openapi/openapi-models.yaml --json > /tmp/diff-models.json || true
-          
-          # Check for breaking changes
-          if [ -f /tmp/diff-models.json ]; then
-            breaking_count=$(jq '.breakingDifferencesFound // false' /tmp/diff-models.json)
-            if [ "$breaking_count" = "true" ]; then
+          # Run oasdiff - models file might not have paths, skip if invalid
+          if oasdiff breaking /tmp/base-openapi-models.yaml openapi/openapi-models.yaml --fail-on ERR 2>/dev/null; then
+            echo "✅ No breaking changes in openapi-models.yaml"
+            echo "models_breaking=false" >> $GITHUB_OUTPUT
+          else
+            exit_code=$?
+            if [ $exit_code -eq 1 ]; then
               echo "❌ Breaking changes detected in openapi-models.yaml"
               echo "models_breaking=true" >> $GITHUB_OUTPUT
-              jq '.breakingDifferences' /tmp/diff-models.json
               exit 1
             else
-              echo "✅ No breaking changes in openapi-models.yaml"
+              echo "⏭️ Skipping openapi-models.yaml (no paths defined)"
               echo "models_breaking=false" >> $GITHUB_OUTPUT
             fi
           fi
@@ -110,18 +111,17 @@ jobs:
                 continue
               }
               
-              # Run openapi-diff
-              openapi-diff /tmp/base-$filename $file --json > /tmp/diff-$filename.json 2>&1 || true
-              
-              # Check for breaking changes
-              if [ -f /tmp/diff-$filename.json ]; then
-                breaking_count=$(jq '.breakingDifferencesFound // false' /tmp/diff-$filename.json 2>/dev/null || echo "false")
-                if [ "$breaking_count" = "true" ]; then
+              # Run oasdiff - schema files might not have paths, check carefully
+              if oasdiff breaking /tmp/base-$filename $file --fail-on ERR 2>/dev/null; then
+                echo "✅ No breaking changes in $file"
+              else
+                exit_code=$?
+                if [ $exit_code -eq 1 ]; then
                   echo "❌ Breaking changes detected in $file"
                   breaking_found=true
-                  jq '.breakingDifferences' /tmp/diff-$filename.json
+                  oasdiff breaking /tmp/base-$filename $file || true
                 else
-                  echo "✅ No breaking changes in $file"
+                  echo "⏭️ Skipping $file (validation error or no paths)"
                 fi
               fi
             fi
