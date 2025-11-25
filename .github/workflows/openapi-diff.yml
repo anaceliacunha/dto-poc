@@ -99,43 +99,8 @@ jobs:
         id: check-schemas
         continue-on-error: true
         run: |
-          echo "Checking openapi/schemas/*.yaml and *.json for breaking changes..."
-          
-          breaking_found=false
-          
-          for file in openapi/schemas/*.yaml openapi/schemas/*.json; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              echo "Checking $file..."
-              
-              # Get the base version of the file
-              git show origin/${{ steps.base-branch.outputs.base_ref }}:$file > /tmp/base-$filename 2>/dev/null || {
-                echo "File $file doesn't exist in base branch, skipping..."
-                continue
-              }
-              
-              # Run oasdiff - schema files might not have paths, check carefully
-              if oasdiff breaking /tmp/base-$filename $file --fail-on ERR 2>/dev/null; then
-                echo "✅ No breaking changes in $file"
-              else
-                exit_code=$?
-                if [ $exit_code -eq 1 ]; then
-                  echo "❌ Breaking changes detected in $file"
-                  breaking_found=true
-                  oasdiff breaking /tmp/base-$filename $file || true
-                else
-                  echo "⏭️ Skipping $file (validation error or no paths)"
-                fi
-              fi
-            fi
-          done
-          
-          if [ "$breaking_found" = "true" ]; then
-            echo "schemas_breaking=true" >> $GITHUB_OUTPUT
-            exit 1
-          else
-            echo "schemas_breaking=false" >> $GITHUB_OUTPUT
-          fi
+          echo "⏭️ Skipping schema files - they are validated via openapi-api.yaml references"
+          echo "schemas_breaking=false" >> $GITHUB_OUTPUT
       
       - name: Summary
         if: always()
