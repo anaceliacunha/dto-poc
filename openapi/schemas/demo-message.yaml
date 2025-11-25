@@ -1,0 +1,73 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: DemoMessage
+type: object
+required:
+  - id
+  - text
+  - createdAt
+properties:
+  id:
+    type: integer
+    format: int64
+  text:
+    type: string
+    description: Plain or empty text
+  createdAt:
+    type: string
+    format: date-time
+  dateOnly:
+    type: string
+    format: date
+  active:
+    type:
+      - boolean
+      - 'null'
+  price:
+    type: number
+    format: double
+  ratio:
+    type: number
+    format: float
+  uuid:
+    type: string
+    format: uuid
+  category:
+    type: string
+    enum: [A, B, C, D]
+  meta:
+    title: DemoMessageMeta
+    type: object
+    properties:
+      locale:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      metrics:
+        type: object
+        additionalProperties:
+          type: number
+    additionalProperties: false
+  items:
+    type: array
+    items:
+      $ref: './item.yaml'
+  binaryData:
+    type: string
+    format: byte
+    description: Base64-encoded payload
+  binaryDataFilename:
+    type: string
+    description: Original filename for binaryData
+  class:
+    type: string
+  display-name:
+    type: string
+  with space:
+    type: string
+  snake_case:
+    type: string
+  camelCase:
+    type: string
+additionalProperties: false
