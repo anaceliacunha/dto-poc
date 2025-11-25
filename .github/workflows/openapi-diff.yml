@@ -48,11 +48,20 @@ jobs:
           echo "Checking openapi/openapi-api.yaml for breaking changes..."
           git fetch origin ${{ steps.base-branch.outputs.base_ref }}
           
-          # Get the base version of the file
+          # Get the base version of the file and its referenced schemas
           git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-api.yaml > /tmp/base-openapi-api.yaml || {
             echo "File doesn't exist in base branch, skipping..."
             exit 0
           }
+          
+          # Copy base schema files to temp directory for reference resolution
+          mkdir -p /tmp/schemas
+          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+            if [ -f "$schema" ]; then
+              filename=$(basename "$schema")
+              git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/schemas/$filename 2>/dev/null || true
+            fi
+          done
           
           # Run oasdiff breaking check with detailed output
           echo "Running oasdiff breaking check..."
