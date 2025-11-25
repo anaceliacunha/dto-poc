@@ -7,7 +7,6 @@ servers:
     description: Java Spring Boot service
   - url: http://localhost:8000
     description: Python FastAPI service
-jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 paths:
   /messages/java:
     get:
