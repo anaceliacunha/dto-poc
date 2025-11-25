@@ -1,15 +1,21 @@
-$schema: https://json-schema.org/draft/2020-12/schema
-title: Item
-type: object
-required:
-  - code
-properties:
-  code:
-    type: string
-  quantity:
-    type: number
-    format: float
-  weight:
-    type: number
-    format: double
-additionalProperties: false
+openapi: 3.1.0
+info:
+  title: Item Schema
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+        quantity:
+          type: number
+          format: float
+        weight:
+          type: number
+          format: double
+      additionalProperties: false
