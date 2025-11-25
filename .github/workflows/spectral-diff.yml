@@ -48,35 +48,6 @@ jobs:
         run: |
           echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
       
-      - name: Lint current OpenAPI files
-        id: lint-current
-        continue-on-error: true
-        run: |
-          echo "Linting current OpenAPI files with Spectral..."
-          echo ""
-          
-          echo "========================================="
-          echo "Checking openapi-api.yaml..."
-          echo "========================================="
-          spectral lint openapi/openapi-api.yaml --format stylish || true
-          
-          echo ""
-          echo "========================================="
-          echo "Checking openapi-models.yaml..."
-          echo "========================================="
-          spectral lint openapi/openapi-models.yaml --format stylish || true
-          
-          echo ""
-          echo "========================================="
-          echo "Checking schema files..."
-          echo "========================================="
-          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
-            if [ -f "$schema" ]; then
-              echo "Checking $schema..."
-              spectral lint "$schema" --format stylish || true
-            fi
-          done
-      
       - name: Compare with base branch
         id: compare-base
         continue-on-error: true
