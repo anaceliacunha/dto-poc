@@ -57,9 +57,6 @@ properties:
     type: string
     format: byte
     description: Base64-encoded payload
-  binaryDataFilename:
-    type: string
-    description: Original filename for binaryData
   class:
     type: string
   display-name:
