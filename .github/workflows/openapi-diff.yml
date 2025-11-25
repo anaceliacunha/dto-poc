@@ -33,6 +33,7 @@ jobs:
 
           # Copy current revision of the openapi/ tree
           cp -R openapi/. .openapi-diff/head/
+          touch .openapi-diff/README.md
 
           for SPEC in "${SPECS[@]}"; do
             echo "Comparing ${SPEC}"
