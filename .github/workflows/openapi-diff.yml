@@ -25,9 +25,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
-            | grep -E "^(${SPEC_DIR})/.*\.(${SPEC_EXTS})$" || true \
-            > changed_specs.txt
+          { git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+              | grep -E "^(${SPEC_DIR})/.*\.(${SPEC_EXTS})$" \
+              || true; } > changed_specs.txt
+
+          # Ensure file exists even if empty
+          touch changed_specs.txt
 
           echo "Changed specs:"
           cat changed_specs.txt || true
