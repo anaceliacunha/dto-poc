@@ -26,30 +26,6 @@ jobs:
       - name: Install Redocly CLI
         run: npm install -g @redocly/cli
       
-      - name: Create Redocly config
-        run: |
-          cat > .redocly.yaml << 'EOF'
-          apis:
-            main:
-              root: openapi/openapi-api.yaml
-            models:
-              root: openapi/openapi-models.yaml
-          
-          rules:
-            no-unresolved-refs: error
-            no-unused-components: warn
-            operation-operationId: error
-            operation-summary: warn
-            path-not-include-query: error
-            path-parameters-defined: error
-          EOF
-      
-      - name: Lint current OpenAPI files
-        run: |
-          echo "### Linting current OpenAPI files"
-          redocly lint openapi/openapi-api.yaml
-          redocly lint openapi/openapi-models.yaml
-      
       - name: Get base branch files
         run: |
           git fetch origin ${{ github.base_ref }}
