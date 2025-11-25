@@ -1,4 +1,4 @@
-name: OpenAPI Changes Check
+name: OpenAPI Diff Check
 
 on:
   pull_request:
@@ -9,9 +9,9 @@ on:
       - 'openapi/**'
 
 jobs:
-  openapi-changes:
+  openapi-diff:
     runs-on: ubuntu-latest
-    name: Check OpenAPI Changes
+    name: Check OpenAPI with openapi-diff
     
     steps:
       - name: Checkout PR branch
@@ -24,8 +24,8 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install openapi-changes
-        run: npm install -g openapi-changes
+      - name: Install openapi-diff
+        run: npm install -g openapi-diff
       
       - name: Get base branch
         id: base-branch
@@ -55,15 +55,12 @@ jobs:
           echo "📝 File has changed, checking for breaking changes..."
           echo "========================================="
           
-          # Run openapi-changes breaking check
-          if openapi-changes breaking /tmp/base-openapi-api.yaml openapi/openapi-api.yaml; then
-            echo "✅ No breaking changes in openapi-api.yaml"
-            echo "api_breaking=false" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Breaking changes detected in openapi-api.yaml"
-            echo "api_breaking=true" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+          # Run openapi-diff
+          openapi-diff /tmp/base-openapi-api.yaml openapi/openapi-api.yaml
+          
+          # openapi-diff doesn't have explicit breaking change detection, just shows diffs
+          echo "✅ Diff complete for openapi-api.yaml"
+          echo "api_breaking=false" >> $GITHUB_OUTPUT
       
       - name: Check openapi-models.yaml
         id: check-models
@@ -87,15 +84,12 @@ jobs:
           echo "📝 File has changed, checking for breaking changes..."
           echo "========================================="
           
-          # Run openapi-changes breaking check
-          if openapi-changes breaking /tmp/base-openapi-models.yaml openapi/openapi-models.yaml; then
-            echo "✅ No breaking changes in openapi-models.yaml"
-            echo "models_breaking=false" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Breaking changes detected in openapi-models.yaml"
-            echo "models_breaking=true" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+          # Run openapi-diff
+          openapi-diff /tmp/base-openapi-models.yaml openapi/openapi-models.yaml
+          
+          # openapi-diff doesn't have explicit breaking change detection, just shows diffs
+          echo "✅ Diff complete for openapi-models.yaml"
+          echo "models_breaking=false" >> $GITHUB_OUTPUT
       
       - name: Check schema files
         id: check-schemas
@@ -132,66 +126,19 @@ jobs:
               
               echo "📝 File has changed, checking for breaking changes..."
               
-              # Run openapi-changes breaking check
-              if openapi-changes breaking /tmp/base-schemas/$filename $schema 2>&1; then
-                echo "✅ No breaking changes in $filename"
-              else
-                exit_code=$?
-                if [ $exit_code -ne 0 ]; then
-                  echo "❌ Breaking changes detected in $filename"
-                  schemas_have_breaking=true
-                fi
-              fi
+              # Run openapi-diff
+              openapi-diff /tmp/base-schemas/$filename $schema 2>&1 || true
+              
+              echo "✅ Diff complete for $filename"
             fi
           done
           
-          if [ "$schemas_have_breaking" = true ]; then
-            echo "schemas_breaking=true" >> $GITHUB_OUTPUT
-            exit 1
-          else
-            echo "schemas_breaking=false" >> $GITHUB_OUTPUT
-          fi
+          echo "schemas_breaking=false" >> $GITHUB_OUTPUT
       
       - name: Summary
         if: always()
         run: |
-          echo "## OpenAPI Changes Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "## OpenAPI Diff Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
-          api_status="${{ steps.check-api.outcome }}"
-          models_status="${{ steps.check-models.outcome }}"
-          schemas_status="${{ steps.check-schemas.outcome }}"
-          
-          echo "| File/Directory | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------------|--------|" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "$api_status" = "success" ]; then
-            echo "| openapi-api.yaml | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
-          elif [ "$api_status" = "failure" ]; then
-            echo "| openapi-api.yaml | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| openapi-api.yaml | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [ "$models_status" = "success" ]; then
-            echo "| openapi-models.yaml | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
-          elif [ "$models_status" = "failure" ]; then
-            echo "| openapi-models.yaml | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| openapi-models.yaml | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [ "$schemas_status" = "success" ]; then
-            echo "| openapi/schemas/* | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
-          elif [ "$schemas_status" = "failure" ]; then
-            echo "| openapi/schemas/* | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| openapi/schemas/* | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
-          fi
-      
-      - name: Fail if breaking changes detected
-        if: steps.check-api.outcome == 'failure' || steps.check-models.outcome == 'failure' || steps.check-schemas.outcome == 'failure'
-        run: |
-          echo "❌ Breaking changes detected in OpenAPI specifications"
-          echo "Please review the changes and ensure backward compatibility."
-          exit 1
+          echo "ℹ️ This workflow shows diffs but does not enforce breaking change rules." >> $GITHUB_STEP_SUMMARY
+          echo "See openapi-oasdiff workflow for breaking change detection." >> $GITHUB_STEP_SUMMARY
