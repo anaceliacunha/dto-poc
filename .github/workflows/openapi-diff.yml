@@ -17,28 +17,28 @@ jobs:
       - name: Check OpenAPI breaking changes
         run: |
           set -euo pipefail
-          mkdir -p .openapi-diff/base .openapi-diff/head
+          mkdir -p .openapi-diff/base/openapi .openapi-diff/head/openapi
 
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.sha }}"
 
           SPECS=(openapi/openapi-api.yaml openapi/openapi-models.yaml)
 
-          # Materialize base revision of the entire openapi/ tree
+          # Materialize base revision of the entire openapi/ tree (keep the openapi/ prefix)
           while IFS= read -r FILE; do
-            DEST=".openapi-diff/base/${FILE#openapi/}"
+            DEST=".openapi-diff/base/${FILE}"
             mkdir -p "$(dirname "$DEST")"
             git show "${BASE_SHA}:${FILE}" > "$DEST"
           done < <(git ls-tree -r --name-only "${BASE_SHA}" openapi)
 
           # Copy current revision of the openapi/ tree
-          cp -R openapi/. .openapi-diff/head/
+          cp -R openapi/. .openapi-diff/head/openapi/
           touch .openapi-diff/README.md
 
           for SPEC in "${SPECS[@]}"; do
             echo "Comparing ${SPEC}"
             docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
-              ".openapi-diff/base/${SPEC#openapi/}" ".openapi-diff/head/${SPEC#openapi/}" \
+              ".openapi-diff/base/${SPEC}" ".openapi-diff/head/${SPEC}" \
               --fail-on-incompatible \
               --markdown ".openapi-diff/$(basename "$SPEC").diff.md"
           done
