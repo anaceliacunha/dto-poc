@@ -7,6 +7,11 @@ on:
       - develop
     paths:
       - 'openapi/**'
+  push:
+    branches:
+      - 'dev/**'
+    paths:
+      - 'openapi/**'
 
 jobs:
   openapi-diff:
@@ -39,7 +44,11 @@ jobs:
       - name: Get base branch
         id: base-branch
         run: |
-          echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "base_ref=main" >> $GITHUB_OUTPUT
+          fi
       
       - name: Check openapi-api.yaml
         id: check-api
