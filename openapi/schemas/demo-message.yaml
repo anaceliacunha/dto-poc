@@ -67,7 +67,7 @@ components:
           format: byte
           description: Base64-encoded payload
         class:
-          type: string
+          type: number
         display-name:
           type: string
         with space:

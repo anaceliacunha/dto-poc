@@ -12,8 +12,8 @@
         "properties": {
           "code": { "type": "string" },
           "desc": { "type": "string" },
-          "quantity": { "type": "number", "format": "float" },
-          "weight": { "type": "number", "format": "double" }
+          "type": { "type": "string" },
+          "quantity": { "type": "number", "format": "float" }
         },
         "additionalProperties": false
       }
