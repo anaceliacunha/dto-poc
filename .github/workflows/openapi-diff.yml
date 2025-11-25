@@ -1,61 +1,104 @@
-name: OpenAPI Diff
+name: OpenAPI Backward Compatibility
 
 on:
   pull_request:
-    paths:
-      - 'openapi/**'
+    types: [opened, synchronize, reopened]
 
 jobs:
-  diff:
+  bc-check:
     runs-on: ubuntu-latest
+    env:
+      SPEC_DIR: openapi
+      SPEC_EXTS: 'ya?ml|json'
     steps:
-      - name: Checkout repo
+      - name: Checkout PR branch (with full history)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check OpenAPI breaking changes
+      - name: Fetch base branch
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+
+      - name: List changed OpenAPI specs
+        id: changed
+        shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .openapi-diff/base/openapi .openapi-diff/head/openapi .openapi-diff/bundled
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -E "^(${SPEC_DIR})/.*\.(${SPEC_EXTS})$" || true \
+            > changed_specs.txt
 
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.sha }}"
+          echo "Changed specs:"
+          cat changed_specs.txt || true
 
-          SPECS=(openapi/openapi-api.yaml openapi/openapi-models.yaml)
+          COUNT=$(wc -l < changed_specs.txt | tr -d ' ')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
-          # Materialize base revision of the entire openapi/ tree (keep the openapi/ prefix)
-          while IFS= read -r FILE; do
-            DEST=".openapi-diff/base/${FILE}"
-            mkdir -p "$(dirname "$DEST")"
-            git show "${BASE_SHA}:${FILE}" > "$DEST"
-          done < <(git ls-tree -r --name-only "${BASE_SHA}" openapi)
+      - name: Skip if no specs changed
+        if: steps.changed.outputs.count == '0'
+        run: echo "No OpenAPI files changed. Skipping."
 
-          # Copy current revision of the openapi/ tree
-          cp -R openapi/. .openapi-diff/head/openapi/
-          touch .openapi-diff/README.md
+      - name: Prepare base versions of changed specs
+        if: steps.changed.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .openapi-old .openapi-old-bundled .openapi-new-bundled
 
-          for SPEC in "${SPECS[@]}"; do
-            BASENAME="$(basename "$SPEC" .yaml)"
-            BASE_SPEC=".openapi-diff/base/${SPEC}"
-            HEAD_SPEC=".openapi-diff/head/${SPEC}"
-            BUNDLED_BASE=".openapi-diff/bundled/${BASENAME}-base.yaml"
-            BUNDLED_HEAD=".openapi-diff/bundled/${BASENAME}-head.yaml"
+          while IFS= read -r f; do
+            if git ls-tree -r --name-only "origin/${{ github.base_ref }}" | grep -qx "$f"; then
+              mkdir -p ".openapi-old/$(dirname "$f")"
+              git show "origin/${{ github.base_ref }}:$f" > ".openapi-old/$f"
+            else
+              echo "NEW_SPEC $f" >> .openapi-old/new_files.txt
+            fi
+          done < changed_specs.txt
 
-            npx @redocly/cli@latest bundle "$BASE_SPEC" --dereferenced --output "$BUNDLED_BASE"
-            npx @redocly/cli@latest bundle "$HEAD_SPEC" --dereferenced --output "$BUNDLED_HEAD"
+      - name: Run openapi-diff on changed specs (dereferenced)
+        if: steps.changed.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          FAILURES=0
 
-            echo "Comparing ${SPEC}"
-            docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
-              "$BUNDLED_BASE" "$BUNDLED_HEAD" \
-              --fail-on-incompatible \
-              --fail-on-changed \
-              --markdown ".openapi-diff/$(basename "$SPEC").diff.md"
-          done
+          while IFS= read -r f; do
+            echo "────────────────────────────────────────"
+            echo "Comparing: origin/${{ github.base_ref }} ↔ HEAD"
+            echo "$f"
+            echo "────────────────────────────────────────"
 
-      - name: Upload diff reports
+            if [ -f ".openapi-old/$f" ]; then
+              mkdir -p ".openapi-old-bundled/$(dirname "$f")" ".openapi-new-bundled/$(dirname "$f")"
+
+              npx @redocly/cli@latest bundle ".openapi-old/$f" --dereferenced --output ".openapi-old-bundled/$f"
+              npx @redocly/cli@latest bundle "$f" --dereferenced --output ".openapi-new-bundled/$f"
+
+              docker run --rm -v "$PWD:/work" -w /work openapitools/openapi-diff:latest \
+                "/work/.openapi-old-bundled/$f" "/work/.openapi-new-bundled/$f" \
+                --fail-on-incompatible \
+                --fail-on-changed || FAILURES=$((FAILURES+1))
+            else
+              echo "File is NEW in this PR (no base version): $f"
+              echo "Skipping comparison (treat as non-breaking)."
+            fi
+
+            echo ""
+          done < changed_specs.txt
+
+          if [ "$FAILURES" -gt 0 ]; then
+            echo "::error::Detected $FAILURES breaking or changed OpenAPI schema(s)."
+            exit 2
+          fi
+
+      - name: Upload diff logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: openapi-diff
-          path: .openapi-diff
+          name: openapi-diff-logs
+          path: |
+            changed_specs.txt
+            .openapi-old/new_files.txt
+            .openapi-old-bundled
+            .openapi-new-bundled
+          if-no-files-found: ignore
