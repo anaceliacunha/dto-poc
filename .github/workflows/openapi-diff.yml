@@ -144,6 +144,17 @@ jobs:
           # Track if any schema has breaking changes
           schemas_have_breaking=false
           
+          # Create temp directory for base schemas (reuse if exists)
+          if [ ! -d /tmp/openapi-base/schemas ]; then
+            mkdir -p /tmp/openapi-base/schemas
+            for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+              if [ -f "$schema" ]; then
+                filename=$(basename "$schema")
+                git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/openapi-base/schemas/$filename 2>/dev/null || true
+              fi
+            done
+          fi
+          
           # Check each schema file individually
           for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
             if [ -f "$schema" ]; then
@@ -151,14 +162,16 @@ jobs:
               echo ""
               echo "Checking $schema..."
               
-              # Get base version
-              if ! git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/base-$filename 2>/dev/null; then
+              # Check if base version exists
+              if [ ! -f /tmp/openapi-base/schemas/$filename ]; then
                 echo "⏭️ $filename is new, skipping..."
                 continue
               fi
               
-              # Run oasdiff on individual schema file
-              if oasdiff breaking /tmp/base-$filename $schema --composed --format text --fail-on WARN 2>/dev/null; then
+              # Run oasdiff on individual schema file with --composed flag
+              # Run from openapi-base/schemas to resolve references correctly
+              cd /tmp/openapi-base/schemas
+              if oasdiff breaking $filename "$GITHUB_WORKSPACE/$schema" --composed --format text --fail-on WARN 2>&1; then
                 echo "✅ No breaking changes in $filename"
               else
                 exit_code=$?
@@ -169,6 +182,7 @@ jobs:
                   echo "⚠️ Could not validate $filename (might not be a complete OpenAPI spec)"
                 fi
               fi
+              cd "$GITHUB_WORKSPACE"
             fi
           done
           
