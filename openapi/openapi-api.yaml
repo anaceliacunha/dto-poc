@@ -88,5 +88,5 @@ paths:
 components:
   schemas:
     DemoMessage:
-      $ref: ./schemas/demo-message.schema.json
+      $ref: ./schemas/demo-message.yaml
 
