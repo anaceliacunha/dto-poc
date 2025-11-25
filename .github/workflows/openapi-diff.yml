@@ -139,66 +139,8 @@ jobs:
         id: check-schemas
         continue-on-error: true
         run: |
-          echo "Checking individual schema files for breaking changes..."
-          
-          # Track if any schema has breaking changes
-          schemas_have_breaking=false
-          
-          # Create temp directory for base schemas (reuse if exists)
-          if [ ! -d /tmp/openapi-base/schemas ]; then
-            mkdir -p /tmp/openapi-base/schemas
-            for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
-              if [ -f "$schema" ]; then
-                filename=$(basename "$schema")
-                git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/openapi-base/schemas/$filename 2>/dev/null || true
-              fi
-            done
-          fi
-          
-          # Check each schema file individually
-          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
-            if [ -f "$schema" ]; then
-              filename=$(basename "$schema")
-              echo ""
-              echo "========================================="
-              echo "Checking $schema..."
-              echo "========================================="
-              
-              # Check if base version exists
-              if [ ! -f /tmp/openapi-base/schemas/$filename ]; then
-                echo "⏭️ $filename is new, skipping..."
-                continue
-              fi
-              
-              # Run oasdiff on individual schema file with --composed flag
-              # Run from openapi-base/schemas to resolve references correctly
-              cd /tmp/openapi-base/schemas
-              echo "Running: oasdiff breaking $filename $GITHUB_WORKSPACE/$schema --composed --format text --fail-on WARN"
-              oasdiff breaking $filename "$GITHUB_WORKSPACE/$schema" --composed --format text --fail-on WARN 2>&1 | tee /tmp/oasdiff-output.txt
-              exit_code=${PIPESTATUS[0]}
-              
-              # Show the output
-              cat /tmp/oasdiff-output.txt
-              
-              if [ $exit_code -eq 0 ]; then
-                echo "✅ No breaking changes in $filename"
-              elif [ $exit_code -eq 1 ]; then
-                echo "❌ Breaking changes detected in $filename"
-                schemas_have_breaking=true
-              else
-                echo "⚠️ Could not validate $filename (exit code: $exit_code)"
-              fi
-              
-              cd "$GITHUB_WORKSPACE"
-            fi
-          done
-          
-          if [ "$schemas_have_breaking" = true ]; then
-            echo "schemas_breaking=true" >> $GITHUB_OUTPUT
-            exit 1
-          else
-            echo "schemas_breaking=false" >> $GITHUB_OUTPUT
-          fi
+          echo "ℹ️ Schema files are automatically validated via openapi-api.yaml and openapi-models.yaml references with --composed flag"
+          echo "schemas_breaking=false" >> $GITHUB_OUTPUT
       
       - name: Summary
         if: always()
