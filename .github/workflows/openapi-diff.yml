@@ -49,11 +49,15 @@ jobs:
           set -euo pipefail
           mkdir -p .openapi-old .openapi-old-bundled .openapi-new-bundled
 
+          # Mirror the entire base openapi/ tree so $ref resolution works during bundling
+          git ls-tree -r --name-only "origin/${{ github.base_ref }}" openapi | while read -r FILE; do
+            mkdir -p ".openapi-old/$(dirname "$FILE")"
+            git show "origin/${{ github.base_ref }}:$FILE" > ".openapi-old/$FILE"
+          done
+
+          # Record which changed specs are new (absent in base)
           while IFS= read -r f; do
-            if git ls-tree -r --name-only "origin/${{ github.base_ref }}" | grep -qx "$f"; then
-              mkdir -p ".openapi-old/$(dirname "$f")"
-              git show "origin/${{ github.base_ref }}:$f" > ".openapi-old/$f"
-            else
+            if ! [ -f ".openapi-old/$f" ]; then
               echo "NEW_SPEC $f" >> .openapi-old/new_files.txt
             fi
           done < changed_specs.txt
