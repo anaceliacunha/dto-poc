@@ -1,0 +1,179 @@
+name: OpenAPI Backward Compatibility Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'openapi/**'
+
+jobs:
+  openapi-diff:
+    runs-on: ubuntu-latest
+    name: Check OpenAPI Backward Compatibility
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install openapi-diff
+        run: npm install -g openapi-diff
+      
+      - name: Get base branch
+        id: base-branch
+        run: |
+          echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+      
+      - name: Check openapi-api.yaml
+        id: check-api
+        continue-on-error: true
+        run: |
+          echo "Checking openapi/openapi-api.yaml for breaking changes..."
+          git fetch origin ${{ steps.base-branch.outputs.base_ref }}
+          
+          # Get the base version of the file
+          git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-api.yaml > /tmp/base-openapi-api.yaml || {
+            echo "File doesn't exist in base branch, skipping..."
+            exit 0
+          }
+          
+          # Run openapi-diff
+          openapi-diff /tmp/base-openapi-api.yaml openapi/openapi-api.yaml --json > /tmp/diff-api.json || true
+          
+          # Check for breaking changes
+          if [ -f /tmp/diff-api.json ]; then
+            breaking_count=$(jq '.breakingDifferencesFound // false' /tmp/diff-api.json)
+            if [ "$breaking_count" = "true" ]; then
+              echo "❌ Breaking changes detected in openapi-api.yaml"
+              echo "api_breaking=true" >> $GITHUB_OUTPUT
+              jq '.breakingDifferences' /tmp/diff-api.json
+              exit 1
+            else
+              echo "✅ No breaking changes in openapi-api.yaml"
+              echo "api_breaking=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Check openapi-models.yaml
+        id: check-models
+        continue-on-error: true
+        run: |
+          echo "Checking openapi/openapi-models.yaml for breaking changes..."
+          
+          # Get the base version of the file
+          git show origin/${{ steps.base-branch.outputs.base_ref }}:openapi/openapi-models.yaml > /tmp/base-openapi-models.yaml || {
+            echo "File doesn't exist in base branch, skipping..."
+            exit 0
+          }
+          
+          # Run openapi-diff
+          openapi-diff /tmp/base-openapi-models.yaml openapi/openapi-models.yaml --json > /tmp/diff-models.json || true
+          
+          # Check for breaking changes
+          if [ -f /tmp/diff-models.json ]; then
+            breaking_count=$(jq '.breakingDifferencesFound // false' /tmp/diff-models.json)
+            if [ "$breaking_count" = "true" ]; then
+              echo "❌ Breaking changes detected in openapi-models.yaml"
+              echo "models_breaking=true" >> $GITHUB_OUTPUT
+              jq '.breakingDifferences' /tmp/diff-models.json
+              exit 1
+            else
+              echo "✅ No breaking changes in openapi-models.yaml"
+              echo "models_breaking=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Check schema files
+        id: check-schemas
+        continue-on-error: true
+        run: |
+          echo "Checking openapi/schemas/*.yaml and *.json for breaking changes..."
+          
+          breaking_found=false
+          
+          for file in openapi/schemas/*.yaml openapi/schemas/*.json; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              echo "Checking $file..."
+              
+              # Get the base version of the file
+              git show origin/${{ steps.base-branch.outputs.base_ref }}:$file > /tmp/base-$filename 2>/dev/null || {
+                echo "File $file doesn't exist in base branch, skipping..."
+                continue
+              }
+              
+              # Run openapi-diff
+              openapi-diff /tmp/base-$filename $file --json > /tmp/diff-$filename.json 2>&1 || true
+              
+              # Check for breaking changes
+              if [ -f /tmp/diff-$filename.json ]; then
+                breaking_count=$(jq '.breakingDifferencesFound // false' /tmp/diff-$filename.json 2>/dev/null || echo "false")
+                if [ "$breaking_count" = "true" ]; then
+                  echo "❌ Breaking changes detected in $file"
+                  breaking_found=true
+                  jq '.breakingDifferences' /tmp/diff-$filename.json
+                else
+                  echo "✅ No breaking changes in $file"
+                fi
+              fi
+            fi
+          done
+          
+          if [ "$breaking_found" = "true" ]; then
+            echo "schemas_breaking=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "schemas_breaking=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## OpenAPI Backward Compatibility Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          api_status="${{ steps.check-api.outcome }}"
+          models_status="${{ steps.check-models.outcome }}"
+          schemas_status="${{ steps.check-schemas.outcome }}"
+          
+          echo "| File/Directory | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$api_status" = "success" ]; then
+            echo "| openapi-api.yaml | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$api_status" = "failure" ]; then
+            echo "| openapi-api.yaml | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| openapi-api.yaml | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "$models_status" = "success" ]; then
+            echo "| openapi-models.yaml | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$models_status" = "failure" ]; then
+            echo "| openapi-models.yaml | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| openapi-models.yaml | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "$schemas_status" = "success" ]; then
+            echo "| openapi/schemas/* | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$schemas_status" = "failure" ]; then
+            echo "| openapi/schemas/* | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| openapi/schemas/* | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Fail if breaking changes detected
+        if: steps.check-api.outcome == 'failure' || steps.check-models.outcome == 'failure' || steps.check-schemas.outcome == 'failure'
+        run: |
+          echo "❌ Breaking changes detected in OpenAPI specifications"
+          echo "Please review the changes and ensure backward compatibility or update the version accordingly."
+          exit 1
