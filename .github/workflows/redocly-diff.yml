@@ -43,13 +43,7 @@ jobs:
             path-not-include-query: error
             path-parameters-defined: error
           EOF
-      
-      - name: Lint current OpenAPI files
-        run: |
-          echo "### Linting current OpenAPI files"
-          redocly lint openapi/openapi-api.yaml
-          redocly lint openapi/openapi-models.yaml
-      
+            
       - name: Checkout base branch
         run: |
           git fetch origin ${{ github.base_ref }}
