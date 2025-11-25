@@ -173,8 +173,12 @@ jobs:
               # Run oasdiff on individual schema file with --composed flag
               # Run from openapi-base/schemas to resolve references correctly
               cd /tmp/openapi-base/schemas
-              oasdiff breaking $filename "$GITHUB_WORKSPACE/$schema" --composed --format text --fail-on WARN
-              exit_code=$?
+              echo "Running: oasdiff breaking $filename $GITHUB_WORKSPACE/$schema --composed --format text --fail-on WARN"
+              oasdiff breaking $filename "$GITHUB_WORKSPACE/$schema" --composed --format text --fail-on WARN 2>&1 | tee /tmp/oasdiff-output.txt
+              exit_code=${PIPESTATUS[0]}
+              
+              # Show the output
+              cat /tmp/oasdiff-output.txt
               
               if [ $exit_code -eq 0 ]; then
                 echo "✅ No breaking changes in $filename"
