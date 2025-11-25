@@ -17,6 +17,9 @@ components:
         text:
           type: string
           description: Plain or empty text
+        test:
+          type: string
+          description: Plain or empty text
         createdAt:
           type: string
           format: date-time
