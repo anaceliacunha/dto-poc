@@ -67,9 +67,12 @@ jobs:
           mv /tmp/base-openapi-api.yaml /tmp/openapi-base/openapi-api.yaml
           
           # Run oasdiff breaking check with detailed output
+          # Change to /tmp/openapi-base so relative references resolve correctly for base file
+          # Use absolute path for revision file
           echo "Running oasdiff breaking check..."
           echo "========================================="
-          oasdiff breaking /tmp/openapi-base/openapi-api.yaml openapi/openapi-api.yaml --format text --fail-on ERR && {
+          cd /tmp/openapi-base
+          oasdiff breaking openapi-api.yaml "$GITHUB_WORKSPACE/openapi/openapi-api.yaml" --format text --fail-on ERR && {
             echo "✅ No breaking changes in openapi-api.yaml"
             echo "api_breaking=false" >> $GITHUB_OUTPUT
           } || {
@@ -77,6 +80,7 @@ jobs:
             echo "api_breaking=true" >> $GITHUB_OUTPUT
             exit 1
           }
+          cd "$GITHUB_WORKSPACE"
       
       - name: Check openapi-models.yaml
         id: check-models
@@ -90,20 +94,23 @@ jobs:
             exit 0
           }
           
-          # Copy base schema files to temp directory maintaining directory structure
-          mkdir -p /tmp/openapi-base/schemas
-          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
-            if [ -f "$schema" ]; then
-              filename=$(basename "$schema")
-              git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/openapi-base/schemas/$filename 2>/dev/null || true
-            fi
-          done
+          # Copy base schema files to temp directory maintaining directory structure (reuse from api check)
+          if [ ! -d /tmp/openapi-base/schemas ]; then
+            mkdir -p /tmp/openapi-base/schemas
+            for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+              if [ -f "$schema" ]; then
+                filename=$(basename "$schema")
+                git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/openapi-base/schemas/$filename 2>/dev/null || true
+              fi
+            done
+          fi
           
           # Move the base models file to the same directory structure
           mv /tmp/base-openapi-models.yaml /tmp/openapi-base/openapi-models.yaml
           
           # Run oasdiff - models file might not have paths, skip if invalid
-          if oasdiff breaking /tmp/openapi-base/openapi-models.yaml openapi/openapi-models.yaml --format text --fail-on ERR 2>/dev/null; then
+          cd /tmp/openapi-base
+          if oasdiff breaking openapi-models.yaml "$GITHUB_WORKSPACE/openapi/openapi-models.yaml" --format text --fail-on ERR 2>/dev/null; then
             echo "✅ No breaking changes in openapi-models.yaml"
             echo "models_breaking=false" >> $GITHUB_OUTPUT
           else
@@ -117,6 +124,7 @@ jobs:
               echo "models_breaking=false" >> $GITHUB_OUTPUT
             fi
           fi
+          cd "$GITHUB_WORKSPACE"
       
       - name: Check schema files
         id: check-schemas
