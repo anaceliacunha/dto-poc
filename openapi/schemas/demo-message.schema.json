@@ -33,7 +33,7 @@
       "type": "array",
       "items": { "$ref": "./item.schema.json" }
     },
-    "binaryData": { "type": "string", "format": "byte", "description": "Base64-encoded payload" },
+    "binaryDataContent": { "type": "string", "format": "byte", "description": "Base64-encoded payload" },
     "binaryDataFilename": { "type": "string", "description": "Original filename for binaryData" },
     "class": { "type": "string" },
     "display-name": { "type": "string" },
