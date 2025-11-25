@@ -1,0 +1,113 @@
+name: Rusty Schema Diff Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'openapi/schemas/**'
+
+jobs:
+  rusty-schema-diff:
+    runs-on: ubuntu-latest
+    name: Check Schema Changes with Rusty Schema Diff
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install Rusty Schema Diff
+        run: cargo install rusty-schema-diff
+      
+      - name: Get base branch
+        id: base-branch
+        run: |
+          echo "base_ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+      
+      - name: Check JSON Schema files
+        id: check-schemas
+        continue-on-error: true
+        run: |
+          echo "Checking JSON Schema files for breaking changes..."
+          git fetch origin ${{ steps.base-branch.outputs.base_ref }}
+          
+          # Track if any schema has breaking changes
+          schemas_have_breaking=false
+          
+          # Create temp directory for base schemas
+          mkdir -p /tmp/base-schemas
+          
+          # Check each JSON schema file
+          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+            if [ -f "$schema" ]; then
+              filename=$(basename "$schema")
+              echo ""
+              echo "========================================="
+              echo "Checking $schema..."
+              echo "========================================="
+              
+              # Get base version
+              if ! git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/base-schemas/$filename 2>/dev/null; then
+                echo "⏭️ $filename is new, skipping..."
+                continue
+              fi
+              
+              # Check if files are different
+              if diff -q /tmp/base-schemas/$filename "$schema" > /dev/null 2>&1; then
+                echo "✅ No changes in $filename"
+                continue
+              fi
+              
+              echo "📝 File has changed, checking for breaking changes..."
+              
+              # Run rusty-schema-diff
+              if rusty-schema-diff /tmp/base-schemas/$filename $schema --breaking-only; then
+                echo "✅ No breaking changes in $filename"
+              else
+                exit_code=$?
+                if [ $exit_code -ne 0 ]; then
+                  echo "❌ Breaking changes detected in $filename"
+                  schemas_have_breaking=true
+                fi
+              fi
+            fi
+          done
+          
+          if [ "$schemas_have_breaking" = true ]; then
+            echo "schemas_breaking=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "schemas_breaking=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Rusty Schema Diff Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          schemas_status="${{ steps.check-schemas.outcome }}"
+          
+          echo "| Directory | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$schemas_status" = "success" ]; then
+            echo "| openapi/schemas/* | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+          elif [ "$schemas_status" = "failure" ]; then
+            echo "| openapi/schemas/* | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| openapi/schemas/* | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Fail if breaking changes detected
+        if: steps.check-schemas.outcome == 'failure'
+        run: |
+          echo "❌ Breaking changes detected in JSON Schema files"
+          echo "Please review the changes and ensure backward compatibility."
+          exit 1
