@@ -1,0 +1,49 @@
+name: OpenAPI Diff
+
+on:
+  pull_request:
+    paths:
+      - 'openapi/**'
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check OpenAPI breaking changes
+        run: |
+          set -euo pipefail
+          mkdir -p .openapi-diff
+
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.sha }}"
+
+          SPECS=(openapi/openapi-api.yaml openapi/openapi-models.yaml)
+
+          for SPEC in "${SPECS[@]}"; do
+            BASENAME="$(basename "$SPEC")"
+            BASE_OUT=".openapi-diff/${BASENAME}.base.yaml"
+            HEAD_OUT=".openapi-diff/${BASENAME}.head.yaml"
+
+            # Extract base version from the target branch
+            git show "${BASE_SHA}:${SPEC}" > "${BASE_OUT}"
+            # Copy current PR version
+            cp "${SPEC}" "${HEAD_OUT}"
+
+            echo "Comparing ${SPEC}"
+            docker run --rm -v "${PWD}:${PWD}" -w "${PWD}" openapitools/openapi-diff:latest \
+              "${BASE_OUT}" "${HEAD_OUT}" \
+              --fail-on-incompatible \
+              --markdown ".openapi-diff/${BASENAME}.diff.md"
+          done
+
+      - name: Upload diff reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-diff
+          path: .openapi-diff
