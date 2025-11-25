@@ -8,9 +8,10 @@
     "schemas": {
       "Item": {
         "type": "object",
-        "required": ["code"],
+        "required": ["code","desc"],
         "properties": {
           "code": { "type": "string" },
+          "desc": { "type": "string" },
           "quantity": { "type": "number", "format": "float" },
           "weight": { "type": "number", "format": "double" }
         },

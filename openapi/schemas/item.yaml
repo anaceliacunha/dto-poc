@@ -14,7 +14,4 @@ components:
         quantity:
           type: number
           format: float
-        weight:
-          type: number
-          format: double
       additionalProperties: false
