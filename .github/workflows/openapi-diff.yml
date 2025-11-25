@@ -7,8 +7,6 @@ on:
 jobs:
   bc-check:
     runs-on: ubuntu-latest
-    env:
-      SPEC_REGEX: '^openapi/openapi-[^/]+\.ya?ml$'
     steps:
       - name: Checkout PR branch (with full history)
         uses: actions/checkout@v4
@@ -19,22 +17,22 @@ jobs:
         run: |
           git fetch origin "${{ github.base_ref }}"
 
-      - name: List changed OpenAPI specs
+      - name: Detect changes under openapi/
         id: changed
         shell: bash
         run: |
           set -euo pipefail
           { git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
-              | grep -E "${SPEC_REGEX}" \
-              || true; } > changed_specs.txt
+              | grep -E "^openapi/" \
+              || true; } > changed_openapi.txt
 
           # Ensure file exists even if empty
-          touch changed_specs.txt
+          touch changed_openapi.txt
 
-          echo "Changed specs:"
-          cat changed_specs.txt || true
+          echo "Changed files under openapi/:"
+          cat changed_openapi.txt || true
 
-          COUNT=$(wc -l < changed_specs.txt | tr -d ' ')
+          COUNT=$(wc -l < changed_openapi.txt | tr -d ' ')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Skip if no specs changed
@@ -57,9 +55,9 @@ jobs:
           # Record which changed specs are new (absent in base)
           while IFS= read -r f; do
             if ! [ -f ".openapi-old/$f" ]; then
-              echo "NEW_SPEC $f" >> .openapi-old/new_files.txt
+              echo "NEW_FILE $f" >> .openapi-old/new_files.txt
             fi
-          done < changed_specs.txt
+          done < changed_openapi.txt
 
       - name: Run openapi-diff on changed specs (dereferenced)
         if: steps.changed.outputs.count != '0'
@@ -68,29 +66,29 @@ jobs:
           set -euo pipefail
           FAILURES=0
 
-          while IFS= read -r f; do
+          # Always diff the main OpenAPI specs so schema changes get picked up
+          for f in openapi/openapi-api.yaml openapi/openapi-models.yaml; do
+            if ! [ -f "$f" ]; then
+              echo "Skipping missing spec: $f"
+              continue
+            fi
             echo "────────────────────────────────────────"
             echo "Comparing: origin/${{ github.base_ref }} ↔ HEAD"
             echo "$f"
             echo "────────────────────────────────────────"
 
-            if [ -f ".openapi-old/$f" ]; then
-              mkdir -p ".openapi-old-bundled/$(dirname "$f")" ".openapi-new-bundled/$(dirname "$f")"
+            mkdir -p ".openapi-old-bundled/$(dirname "$f")" ".openapi-new-bundled/$(dirname "$f")"
 
-              npx @redocly/cli@latest bundle ".openapi-old/$f" --dereferenced --output ".openapi-old-bundled/$f"
-              npx @redocly/cli@latest bundle "$f" --dereferenced --output ".openapi-new-bundled/$f"
+            npx @redocly/cli@latest bundle ".openapi-old/$f" --dereferenced --output ".openapi-old-bundled/$f"
+            npx @redocly/cli@latest bundle "$f" --dereferenced --output ".openapi-new-bundled/$f"
 
-              docker run --rm -v "$PWD:/work" -w /work openapitools/openapi-diff:latest \
-                "/work/.openapi-old-bundled/$f" "/work/.openapi-new-bundled/$f" \
-                --fail-on-incompatible \
-                --fail-on-changed || FAILURES=$((FAILURES+1))
-            else
-              echo "File is NEW in this PR (no base version): $f"
-              echo "Skipping comparison (treat as non-breaking)."
-            fi
+            docker run --rm -v "$PWD:/work" -w /work openapitools/openapi-diff:latest \
+              "/work/.openapi-old-bundled/$f" "/work/.openapi-new-bundled/$f" \
+              --fail-on-incompatible \
+              --fail-on-changed || FAILURES=$((FAILURES+1))
 
             echo ""
-          done < changed_specs.txt
+          done
 
           if [ "$FAILURES" -gt 0 ]; then
             echo "::error::Detected $FAILURES breaking or changed OpenAPI schema(s)."
@@ -103,7 +101,7 @@ jobs:
         with:
           name: openapi-diff-logs
           path: |
-            changed_specs.txt
+            changed_openapi.txt
             .openapi-old/new_files.txt
             .openapi-old-bundled
             .openapi-new-bundled
