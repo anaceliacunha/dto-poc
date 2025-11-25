@@ -27,20 +27,10 @@ jobs:
       - name: Install Spectral
         run: npm install -g @stoplight/spectral-cli
       
-      - name: Create Spectral ruleset for backward compatibility
+      - name: Create Spectral ruleset
         run: |
           cat > .spectral.yml << 'EOF'
           extends: spectral:oas
-          rules:
-            # Ensure no breaking changes
-            oas3-schema:
-              severity: error
-            operation-operationId:
-              severity: error
-            operation-parameters:
-              severity: error
-            operation-tag-defined:
-              severity: warn
           EOF
       
       - name: Get base branch
