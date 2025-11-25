@@ -139,8 +139,45 @@ jobs:
         id: check-schemas
         continue-on-error: true
         run: |
-          echo "⏭️ Skipping schema files - they are validated via openapi-api.yaml references"
-          echo "schemas_breaking=false" >> $GITHUB_OUTPUT
+          echo "Checking individual schema files for breaking changes..."
+          
+          # Track if any schema has breaking changes
+          schemas_have_breaking=false
+          
+          # Check each schema file individually
+          for schema in openapi/schemas/*.json openapi/schemas/*.yaml; do
+            if [ -f "$schema" ]; then
+              filename=$(basename "$schema")
+              echo ""
+              echo "Checking $schema..."
+              
+              # Get base version
+              if ! git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/base-$filename 2>/dev/null; then
+                echo "⏭️ $filename is new, skipping..."
+                continue
+              fi
+              
+              # Run oasdiff on individual schema file
+              if oasdiff breaking /tmp/base-$filename $schema --composed --format text --fail-on WARN 2>/dev/null; then
+                echo "✅ No breaking changes in $filename"
+              else
+                exit_code=$?
+                if [ $exit_code -eq 1 ]; then
+                  echo "❌ Breaking changes detected in $filename"
+                  schemas_have_breaking=true
+                else
+                  echo "⚠️ Could not validate $filename (might not be a complete OpenAPI spec)"
+                fi
+              fi
+            fi
+          done
+          
+          if [ "$schemas_have_breaking" = true ]; then
+            echo "schemas_breaking=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "schemas_breaking=false" >> $GITHUB_OUTPUT
+          fi
       
       - name: Summary
         if: always()
