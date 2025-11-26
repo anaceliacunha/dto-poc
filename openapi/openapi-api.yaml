@@ -10,18 +10,6 @@ servers:
     description: Python FastAPI service
 paths:
   /messages/java:
-    get:
-      summary: List messages seen by Java
-      operationId: listJavaMessages
-      responses:
-        '200':
-          description: Messages stored by Java service
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DemoMessage'
     post:
       summary: Publish a message through Java service
       operationId: publishJavaMessage
@@ -47,7 +35,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DemoMessage'
-  /messages/python:
+  /messages/pythonapi:
     get:
       summary: List messages seen by Python
       operationId: listPythonMessages
