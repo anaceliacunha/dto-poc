@@ -12,7 +12,11 @@
           "codegen-python-models",
           "codegen-python-api",
           "codegen-ts-models",
-          "codegen-react-client",
+          "codegen-react-api",
+          "build-libs",
+          "build-java-lib",
+          "build-python-lib",
+          "build-ts-lib",
           "kafka-up",
           "kafka-down",
           "topics"

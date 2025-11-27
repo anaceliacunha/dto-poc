@@ -39,10 +39,10 @@
         "command": "make codegen-ts-models"
       }
     },
-    "codegen-react-client": {
+    "codegen-react-api": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "make codegen-react-client"
+        "command": "make codegen-react-api"
       }
     },
     "kafka-up": {
@@ -79,6 +79,54 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "make run-web"
+      }
+    },
+    "build-libs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make build-libs"
+      }
+    },
+    "build-java-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make build-java-lib"
+      }
+    },
+    "build-python-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make build-python-lib"
+      }
+    },
+    "build-ts-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make build-ts-lib"
+      }
+    },
+    "install-libs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make install-libs"
+      }
+    },
+    "install-java-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make install-java-lib"
+      }
+    },
+    "install-python-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make install-python-lib"
+      }
+    },
+    "install-ts-lib": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make install-ts-lib"
       }
     },
     "demo": {

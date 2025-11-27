@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@activate/api-models": "file:../../libs/ts-lib",
     "clsx": "2.1.0",
     "dayjs": "1.11.10",
     "react": "18.2.0",
@@ -17,11 +18,11 @@
   "devDependencies": {
     "@types/react": "18.2.66",
     "@types/react-dom": "18.2.22",
-    "@vitejs/plugin-react": "4.2.1",
+    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "10.4.17",
     "postcss": "8.4.35",
     "tailwindcss": "3.4.1",
     "typescript": "5.4.2",
-    "vite": "5.1.4"
+    "vite": "^6.0.0"
   }
 }

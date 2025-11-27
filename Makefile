@@ -37,7 +37,7 @@ codegen-python-models:
 	  -o $(PY_MODEL_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
 	  --global-property models \
-	  --additional-properties=packageName=py_models
+	  --additional-properties=packageName=activate_api_models
 
 
 codegen-python-api:
@@ -47,7 +47,7 @@ codegen-python-api:
 	  -o $(PY_API_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
 	  --global-property apis,supportingFiles \
-	  --additional-properties=packageName=kafka_api,modelPackage=py_models.models
+	  --additional-properties=packageName=activate_api_models,modelPackage=activate_api_models.models
 
 codegen-ts-models:
 	openapi-generator generate \
@@ -61,7 +61,7 @@ codegen-ts-models:
 	  --additional-properties=modelPropertyNaming=original,supportsES6=true
 
 
-codegen-react-client:
+codegen-react-api:
 	openapi-generator generate \
 	  -i openapi/openapi-api.yaml \
 	  -g typescript-fetch \
@@ -69,7 +69,38 @@ codegen-react-client:
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
 	  --global-property apis,models,supportingFiles
 
-codegen: codegen-java-models codegen-java-api codegen-python-models codegen-python-api codegen-ts-models codegen-react-client
+codegen: codegen-java-models codegen-java-api codegen-python-models codegen-python-api codegen-ts-models codegen-react-api
+
+# Build library packages
+build-java-lib:
+	cd libs/java-lib && mvn clean install
+
+build-python-lib:
+	@if [ ! -d "$(PYTHON_SERVICE_DIR)/.venv" ]; then \
+		echo "Creating Python venv for build..."; \
+		cd $(PYTHON_SERVICE_DIR) && python3 -m venv .venv && .venv/bin/pip install --upgrade pip setuptools wheel; \
+	fi
+	@echo "Cleaning old Python library artifacts..."
+	rm -rf libs/python-lib/src/activate_api_models libs/python-lib/build libs/python-lib/dist libs/python-lib/src/*.egg-info
+	mkdir -p libs/python-lib/src/activate_api_models
+	cd libs/python-lib && ../../$(PYTHON_SERVICE_DIR)/.venv/bin/python setup.py sdist bdist_wheel
+
+build-ts-lib:
+	cd libs/ts-lib && npm install && npm run build
+
+build-libs: build-java-lib build-python-lib build-ts-lib
+
+# Install libraries to consuming applications
+install-java-lib: build-java-lib
+	@echo "Java library installed to local Maven repository (~/.m2/repository)"
+
+install-python-lib: build-python-lib
+	cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+
+install-ts-lib: build-ts-lib
+	cd $(WEBAPP_DIR) && npm install ../../libs/ts-lib
+
+install-libs: install-java-lib install-python-lib install-ts-lib
 
 kafka-up:
 	cd infra && podman-compose up -d
@@ -85,11 +116,9 @@ run-java:
 	cd $(JAVA_SERVICE_DIR) && mvn spring-boot:run
 
 run-python:
-	cd $(PYTHON_SERVICE_DIR) && PYTHONPATH=../../gen/python-models:../../gen/python-api/src .venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd $(PYTHON_SERVICE_DIR) && .venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 run-web:
-	mkdir -p $(REACT_API_DST_DIR)
-	rsync -a --delete $(REACT_API_GEN_DIR)/ $(REACT_API_DST_DIR)/
 	cd $(WEBAPP_DIR) && npm install && npm run dev
 
 .PHONY: demo

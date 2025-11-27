@@ -1,5 +1,9 @@
-fastapi==0.110.0
-uvicorn[standard]==0.29.0
-kafka-python==2.0.2
-pydantic==2.6.4
-python-multipart==0.0.9
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+kafka-python-ng>=2.2.0
+pydantic>=2.6.4
+python-multipart>=0.0.9
+# Activate API Model - generated models and API
+# Install with: pip install ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+# or run: make install-python-lib
+activate-api-models==1.0.0

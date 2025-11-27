@@ -17,3 +17,17 @@ coverage/
 infra/.env
 *.log
 /.nx/
+
+# Library build artifacts
+/libs/java-lib/target/
+/libs/python-lib/build/
+/libs/python-lib/dist/
+/libs/python-lib/src/
+/libs/python-lib/*.egg-info
+/libs/python-lib/src/*.egg-info
+/libs/ts-lib/src/
+/libs/ts-lib/dist/
+/libs/ts-lib/node_modules/
+
+# Symlink created for venv path compatibility
+/multi-lang-demo/
