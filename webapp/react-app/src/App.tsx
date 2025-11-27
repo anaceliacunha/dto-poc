@@ -2,10 +2,10 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import './styles.css';
-import type { DemoMessage as GeneratedDemoMessage } from './api/models/DemoMessage';
-import {DemoMessageCategoryEnum, Item} from './api';
-import { DefaultApi } from './api';
-import { Configuration, ResponseError } from './api';
+import type { DemoMessage as GeneratedDemoMessage } from '@activate/api-models/api';
+import { DemoMessageCategoryEnum, Item } from '@activate/api-models/api';
+import { DefaultApi } from '@activate/api-models/api';
+import { Configuration, ResponseError } from '@activate/api-models/api';
 
 type DemoMessage = Omit<
     GeneratedDemoMessage,

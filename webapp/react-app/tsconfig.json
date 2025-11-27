@@ -3,7 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "allowJs": false,
-    "strict": true
+    "strict": true,
+    "moduleResolution": "bundler"
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
