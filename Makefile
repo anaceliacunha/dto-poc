@@ -93,14 +93,38 @@ build-libs: build-java-lib build-python-lib build-ts-lib
 # Install libraries to consuming applications
 install-java-lib: build-java-lib
 	@echo "Java library installed to local Maven repository (~/.m2/repository)"
+	@echo "Note: For remote repository deployment, use 'make publish-java-lib'"
 
-install-python-lib: build-python-lib
-	cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+install-python-lib:
+	@echo "Installing Python library..."
+	@if [ -f "libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl" ]; then \
+		echo "Installing from local wheel..."; \
+		cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl; \
+	else \
+		echo "Installing from PyPI..."; \
+		cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --upgrade activate-api-models; \
+	fi
 
 install-ts-lib: build-ts-lib
-	cd $(WEBAPP_DIR) && npm install ../../libs/ts-lib
+	cd $(WEBAPP_DIR) && npm install @activate/api-models@latest
 
 install-libs: install-java-lib install-python-lib install-ts-lib
+
+# Publish libraries to registries
+publish-java-lib: build-java-lib
+	@echo "Publishing Java library to Maven repository..."
+	cd libs/java-lib && mvn deploy
+
+publish-python-lib: build-python-lib
+	@echo "Publishing Python library to PyPI..."
+	@echo "Make sure you have twine installed: pip install twine"
+	cd libs/python-lib && python -m twine upload dist/*
+
+publish-ts-lib: build-ts-lib
+	@echo "Publishing TypeScript library to npm..."
+	cd libs/ts-lib && npm publish
+
+publish-libs: publish-java-lib publish-python-lib publish-ts-lib
 
 kafka-up:
 	cd infra && podman-compose up -d

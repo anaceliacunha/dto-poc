@@ -22,6 +22,9 @@
     "react",
     "api"
   ],
+  "publishConfig": {
+    "registry": "https://artifactory-production-internal.niqactivate.com/artifactory/api/npm/npm-local/"
+  },
   "peerDependencies": {
     "react": ">=16.8.0"
   },

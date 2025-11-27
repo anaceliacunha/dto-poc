@@ -89,7 +89,15 @@ cd libs/python-lib
 python -m build
 ```
 
+**Publish command:**
+```bash
+cd libs/python-lib
+python -m twine upload dist/*
+```
+
 **Package name:** `activate-api-models` (imports as `activate_api_models`)
+
+**Registry:** PyPI or private PyPI server (optional)
 
 ### TypeScript/React Library (`ts-lib`)
 
@@ -98,6 +106,7 @@ python -m build
 - Compiles TypeScript to JavaScript
 - Generates type definitions
 - Creates an NPM package
+- Publishes to npm registry
 
 **Used by:** `webapp/react-app`
 
@@ -108,7 +117,15 @@ npm install
 npm run build
 ```
 
+**Publish command:**
+```bash
+cd libs/ts-lib
+npm publish
+```
+
 **Package name:** `@activate/api-models`
+
+**Registry:** npm public registry (requires authentication)
 
 ## Workflow
 
@@ -128,15 +145,50 @@ make build-libs
 
 This packages the generated code into distributable libraries.
 
-### 3. Install Libraries
+### 3. Publish Libraries (Optional)
+
+**Publish TypeScript to npm (Required for webapp):**
+```bash
+make publish-ts-lib
+```
+
+**Publish Python to PyPI (Optional):**
+```bash
+make publish-python-lib
+```
+
+**Publish Java to Maven repository (Optional):**
+```bash
+make publish-java-lib
+```
+
+**Publish all:**
+```bash
+make publish-libs
+```
+
+These publish the libraries to their respective registries. TypeScript publishing is required for the webapp to install it. Python and Java can continue using local installations.
+
+### 4. Install Libraries
+
+```bash
+make publish-ts-lib
+```
+
+This publishes the TypeScript library to the npm registry. You must be logged in with `npm login` first.
+
+### 4. Install Libraries
 
 ```bash
 make install-libs
 ```
 
-This installs the libraries to the consumer applications.
+This installs the libraries to the consumer applications:
+- Java: Installs JAR to local Maven repository (~/.m2/repository)
+- Python: Installs wheel to Python service virtual environment
+- TypeScript: Installs from npm registry (@activate/api-models)
 
-### 4. Run Applications
+### 5. Run Applications
 
 ```bash
 make run-java     # Java service (uses JAR from Maven repo)
@@ -171,26 +223,122 @@ make install-java-lib
 
 ### Python: Module not found
 
-Ensure the wheel is installed in your virtual environment:
+**Option 1: Local wheel installation (default)**
+```bash
+make build-python-lib
+make install-python-lib
+```
+
+**Option 2: Install from PyPI (after publishing)**
 ```bash
 cd services/python-app
-source .venv/bin/activate
-pip install ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+.venv/bin/pip install --upgrade activate-api-models
+```
+
+Or delete the local wheel to force PyPI installation:
+```bash
+rm -rf libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+make install-python-lib  # Will install from PyPI
 ```
 
 ### TypeScript: Cannot find module
 
-Ensure the package is installed:
+The TypeScript library is now published to npm. Ensure you've published it first:
 ```bash
-cd webapp/react-app
-npm install
+make publish-ts-lib
 ```
 
-## Publishing (Future)
+Then install it:
+```bash
+cd webapp/react-app
+npm install @activate/api-models@latest
+```
+
+For local development without publishing, you can temporarily use the local version:
+```bash
+cd webapp/react-app
+npm install ../../libs/ts-lib
+```
+
+## Publishing
+
+### TypeScript Library to npm
+
+**Prerequisites:**
+1. npm account with publish access
+2. Logged in: `npm login`
+3. Package built: `make build-ts-lib`
+
+**Publish:**
+```bash
+make publish-ts-lib
+```
+
+This publishes the TypeScript library to the npm public registry.
+
+**Version Updates:**
+Update the version in `libs/ts-lib/package.json` before publishing a new version.
+
+### Python Library to PyPI
+
+**Prerequisites:**
+1. PyPI account
+2. `twine` installed: `pip install twine`
+3. Configured credentials in `~/.pypirc` or use `python -m twine upload --username __token__ --password <your-token>`
+4. Package built: `make build-python-lib`
+
+**Publish:**
+```bash
+make publish-python-lib
+```
+
+This publishes `activate-api-models` to PyPI.
+
+**Version Updates:**
+Update the version in `libs/python-lib/pyproject.toml` before publishing.
+
+**Installation after publishing:**
+```bash
+cd services/python-app
+.venv/bin/pip install --upgrade activate-api-models
+```
+
+### Java Library to Maven Repository
+
+**Prerequisites:**
+1. Maven repository access (Nexus, Artifactory, or similar)
+2. Repository configuration in `~/.m2/settings.xml` with server credentials
+3. `distributionManagement` section in `libs/java-lib/pom.xml` (configure your repository URL)
+4. Package built: `make build-java-lib`
+
+**Publish:**
+```bash
+make publish-java-lib
+```
+
+This runs `mvn deploy` to publish the library to your configured Maven repository.
+
+**Version Updates:**
+Update the version in `libs/java-lib/pom.xml` before publishing.
+
+**Note:** Java library currently uses local Maven repository by default. Publishing to remote repository requires additional pom.xml configuration (not included to avoid conflicts with local development).
+
+### All Libraries
+
+**Publish everything:**
+```bash
+make publish-libs
+```
+
+This publishes Java, Python, and TypeScript libraries in sequence.
+
+## Previous Publishing Section (Deprecated)
 
 For production deployment, you may want to publish these libraries to:
-- **Java**: Private Maven repository or Artifactory
-- **Python**: Private PyPI server or Artifactory
-- **TypeScript**: Private NPM registry or Artifactory
+- **Java**: Private Maven repository, Maven Central, or Artifactory
+- **Python**: PyPI, private PyPI server, or Artifactory
+- **TypeScript**: npm registry (already implemented)
 
 Update the Makefile targets accordingly for your deployment strategy.
+
+**Note:** Publishing capabilities are now implemented. See the "Publishing" section above for current instructions.

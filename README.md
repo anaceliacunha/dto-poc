@@ -54,9 +54,9 @@ DTOs live under:
 | TypeScript | `gen/ts-models` |
 
 **How services consume the DTOs:**
-- **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`)
-- **Python**: Uses the packaged wheel as a pip package (`activate-api-models`), imports as `activate_api_models`
-- **React**: Uses the packaged NPM library (`@activate/api-models`)
+- **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`) from local Maven repository (or remote Maven repository after publishing)
+- **Python**: Uses the packaged wheel as a pip package (`activate-api-models`), imports as `activate_api_models` (can install from local wheel or PyPI)
+- **React**: Uses the NPM library from npm registry (`@activate/api-models`)
 
 See `libs/README.md` for details on the library packaging system.
 
@@ -67,12 +67,18 @@ See `libs/README.md` for details on the library packaging system.
 * Node 18+
 * Podman + Podman Compose (`brew install podman podman-compose`; swap back to Docker Compose if you prefer Docker)
 * openapi-generator CLI (7.17.0 or newer) available on your PATH (`brew install openapi-generator` or `npm i -g @openapitools/openapi-generator-cli`) for the codegen targets
+* npm account with publish access (for publishing `@activate/api-models` to npm registry)
+* PyPI account with publish access (optional, for publishing Python library)
+* Maven repository access (optional, for publishing Java library to remote repository)
 
-After generating code, build and install the libraries:
+After generating code, build and publish the libraries:
 
 ```bash
 make codegen        # Generate code from OpenAPI specs
 make build-libs     # Package into JAR, wheel, and NPM package
+make publish-ts-lib # Publish TypeScript library to npm (requires npm login)
+make publish-python-lib # (Optional) Publish Python library to PyPI (requires twine and PyPI credentials)
+make publish-java-lib   # (Optional) Publish Java library to Maven repository
 make install-libs   # Install to consuming applications
 ```
 
@@ -165,10 +171,21 @@ curl http://localhost:8000/messages/python/from-java | jq
 
 1. `make kafka-up && make topics`
 2. `make codegen` (if not already done)
-3. `make build-libs && make install-libs` (first time or after codegen)
-4. `make run-java` (port 8080)
-5. `make run-python` (port 8000)
-6. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
+3. `make build-libs` (build all libraries)
+4. **Optional publishing:**
+   - `make publish-ts-lib` (publish TypeScript library to npm - requires npm login)
+   - `make publish-python-lib` (publish Python library to PyPI - requires twine and credentials)
+   - `make publish-java-lib` (publish Java library to Maven repository - requires repository configuration)
+5. `make install-libs` (install libraries: Java from local Maven, Python from local wheel or PyPI, TypeScript from npm)
+6. `make run-java` (port 8080)
+7. `make run-python` (port 8000)
+8. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
+
+**Notes:** 
+- TypeScript library requires publishing to npm before webapp can install it
+- Python library can install from local wheel (default) or PyPI (after publishing)
+- Java library uses local Maven repository by default
+- For local development without publishing TypeScript: `cd webapp/react-app && npm install ../../libs/ts-lib`
 
 ## Swagger / OpenAPI UI
 
