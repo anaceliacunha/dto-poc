@@ -15,7 +15,7 @@ dto-poc/
 │  │     ├─ apis/                ← Generated API classes
 │  │     └─ models/              ← Generated model classes
 │  ├─ python-lib/                ← Python package with generated code
-│  │  └─ activate_api_models/
+│  │  └─ src/activate_api_models/
 │  │     ├─ apis/                ← Generated API classes
 │  │     └─ models/              ← Generated model classes
 │  └─ ts-lib/                    ← NPM package with generated code
@@ -44,8 +44,8 @@ The `Makefile` generates OpenAPI code directly into the library directories, app
 make codegen                 # runs every generator (Java/Python/TS models + APIs)
 make codegen-java-models     # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
 make codegen-java-api        # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
-make codegen-python-models   # regenerate Python models in libs/python-lib/activate_api_models/models/
-make codegen-python-api      # regenerate FastAPI in libs/python-lib/activate_api_models/apis/
+make codegen-python-models   # regenerate Python models in libs/python-lib/src/activate_api_models/models/
+make codegen-python-api      # regenerate FastAPI in libs/python-lib/src/activate_api_models/apis/
 make codegen-ts-models       # regenerate TypeScript models in libs/ts-lib/src/models/
 make codegen-react-api       # regenerate React API client in libs/ts-lib/src/apis/
 ```
