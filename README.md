@@ -56,8 +56,8 @@ Generated code locations:
 | --- | --- | --- |
 | Java | com.activate.models | `libs/java-lib/src/main/java/com/activate/models/` |
 | Java | com.activate.apis | `libs/java-lib/src/main/java/com/activate/apis/` |
-| Python | activate_api_models.models | `libs/python-lib/activate_api_models/models/` |
-| Python | activate_api_models.apis | `libs/python-lib/activate_api_models/apis/` |
+| Python | activate_api_models.models | `libs/python-lib/src/activate_api_models/models/` |
+| Python | activate_api_models.apis | `libs/python-lib/src/activate_api_models/apis/` |
 | TypeScript | @activate/api-models | `libs/ts-lib/src/models/` |
 | TypeScript | @activate/api-models/api | `libs/ts-lib/src/api/` |
 

@@ -6,7 +6,7 @@ This directory contains the generated OpenAPI code and packaging configurations 
 
 OpenAPI generators write code directly into these library directories:
 - `libs/java-lib/src/main/java/com/activate/` - Java models and APIs
-- `libs/python-lib/activate_api_models/` - Python models and APIs  
+- `libs/python-lib/src/activate_api_models/` - Python models and APIs  
 - `libs/ts-lib/src/` - TypeScript models and APIs
 
 The build process compiles/packages this generated code without any intermediate copying steps.

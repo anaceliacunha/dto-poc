@@ -36,6 +36,9 @@ codegen-python-models:
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
 	  --global-property models,supportingFiles,modelTests=false \
 	  --additional-properties=packageName=activate_api_models
+	@# Move package to src/ to match python-fastapi structure
+	mkdir -p $(PYTHON_LIB_DIR)/src
+	mv $(PYTHON_LIB_DIR)/activate_api_models $(PYTHON_LIB_DIR)/src/
 
 codegen-python-api:
 	openapi-generator generate \
