@@ -126,48 +126,6 @@ make run-python    # FastAPI on :8000 (uses activate-api-models wheel package)
 make run-web       # React + Vite on :5173 (uses @activate/api-models NPM package)
 ```
 
-## Nx wrappers for Make targets
-
-A Nx workspace mirrors the Makefile so you can run the same tasks via `nx`:
-
-```bash
-npm install   # installs Nx locally (required once)
-
-npx nx run repo:install        # Full install: clean-all, codegen, build-libs, install-libs
-
-npx nx run repo:codegen
-npx nx run repo:codegen-java-models
-npx nx run repo:codegen-java-api
-npx nx run repo:codegen-python-models
-npx nx run repo:codegen-python-api
-npx nx run repo:codegen-react-api
-npx nx run repo:codegen-ts-models
-
-npx nx run repo:clean-codegen
-npx nx run repo:clean-build
-npx nx run repo:clean-all
-
-npx nx run repo:build-libs
-npx nx run repo:build-java-lib
-npx nx run repo:build-python-lib
-npx nx run repo:build-ts-lib
-
-npx nx run repo:install-libs
-npx nx run repo:install-java-lib
-npx nx run repo:install-python-lib
-npx nx run repo:install-ts-lib
-
-npx nx run repo:kafka-up
-npx nx run repo:topics
-npx nx run repo:kafka-down
-
-npx nx run repo:run-java
-npx nx run repo:run-python
-npx nx run repo:run-web
-
-npx nx run repo:demo
-```
-
 The React form builds `DemoMessage` payloads that exercise every schema feature, including:
 
 * binary upload (base64), enum, UUID, floats/doubles
