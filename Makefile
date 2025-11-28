@@ -6,6 +6,9 @@ JAVA_SERVICE_DIR = services/java-app
 PYTHON_SERVICE_DIR = services/python-app
 WEBAPP_DIR = webapp/react-app
 
+# Full install: clean, codegen, build, and install all libraries
+install: clean-all codegen build-libs install-libs
+	@echo "Complete installation finished."
 
 codegen-java-models:
 	openapi-generator generate \
@@ -13,7 +16,7 @@ codegen-java-models:
 	  -g java \
 	  -o $(JAVA_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --global-property models,modelTests=false  \
+	  --global-property models,modelTests=false \
 	  --additional-properties=library=resttemplate,modelPackage=com.activate.models,hideGenerationTimestamp=true,dateLibrary=java8,sourceCompatibility=1.8,targetCompatibility=1.8,useJakartaEe=false
 
 codegen-java-api:
@@ -29,9 +32,9 @@ codegen-python-models:
 	openapi-generator generate \
 	  -i openapi/openapi-models.yaml \
 	  -g python \
-	  -o $(PYTHON_LIB_DIR)/src \
+	  -o $(PYTHON_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --global-property models,modelTests=false \
+	  --global-property models,supportingFiles,modelTests=false \
 	  --additional-properties=packageName=activate_api_models
 
 codegen-python-api:
@@ -40,7 +43,7 @@ codegen-python-api:
 	  -g python-fastapi \
 	  -o $(PYTHON_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,supportingFiles,apiTests=false  \
+	  --global-property apis,models,supportingFiles,apiTests=false \
 	  --additional-properties=packageName=activate_api_models
 
 codegen-ts-models:
@@ -49,9 +52,11 @@ codegen-ts-models:
 	  -g typescript \
 	  -o $(TS_LIB_DIR)/src \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --type-mappings HttpFile=string,binary=string,Date=string,DateTime=string \
+	  --type-mappings binary=string,Date=string,DateTime=string \
 	  --global-property models \
 	  --additional-properties=modelPropertyNaming=original,supportsES6=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models
+	@# Remove HttpFile imports that the generator creates
+	find $(TS_LIB_DIR)/src/models -name "*.ts" -exec sed -i '' "/import.*HttpFile.*from.*'\.\.\/http\/http'/d" {} \;
 
 
 codegen-react-api:
@@ -63,7 +68,7 @@ codegen-react-api:
 	  --global-property apis,models,supportingFiles \
 	  --additional-properties=modelPropertyNaming=original,supportsES6=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models
 
-codegen: codegen-java-models codegen-java-api codegen-python-models codegen-python-api codegen-ts-models codegen-react-api
+codegen: codegen-java-models codegen-java-api codegen-python-api codegen-react-api
 
 # Clean generated code
 clean-codegen:

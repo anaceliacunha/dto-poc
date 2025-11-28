@@ -3,6 +3,12 @@
   "root": ".",
   "projectType": "application",
   "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make install"
+      }
+    },
     "codegen": {
       "executor": "nx:run-commands",
       "options": {
@@ -43,6 +49,24 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "make codegen-react-api"
+      }
+    },
+    "clean-codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make clean-codegen"
+      }
+    },
+    "clean-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make clean-build"
+      }
+    },
+    "clean-all": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make clean-all"
       }
     },
     "kafka-up": {

@@ -84,6 +84,24 @@ make build-libs     # Package into JAR, wheel, and NPM package
 make install-libs   # Install to consuming applications
 ```
 
+Or use the all-in-one command:
+
+```bash
+make install        # Clean all, codegen, build, and install libraries
+```
+
+## Clean commands
+
+```bash
+make clean-codegen  # Remove all generated OpenAPI code (Java, Python, TypeScript)
+make clean-build    # Remove build artifacts (target/, dist/, build/)
+make clean-all      # Run both clean-codegen and clean-build
+```
+
+**Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
+
+## Installing service dependencies
+
 Install service deps once:
 
 ```bash
@@ -115,6 +133,8 @@ A Nx workspace mirrors the Makefile so you can run the same tasks via `nx`:
 ```bash
 npm install   # installs Nx locally (required once)
 
+npx nx run repo:install        # Full install: clean-all, codegen, build-libs, install-libs
+
 npx nx run repo:codegen
 npx nx run repo:codegen-java-models
 npx nx run repo:codegen-java-api
@@ -122,6 +142,10 @@ npx nx run repo:codegen-python-models
 npx nx run repo:codegen-python-api
 npx nx run repo:codegen-react-api
 npx nx run repo:codegen-ts-models
+
+npx nx run repo:clean-codegen
+npx nx run repo:clean-build
+npx nx run repo:clean-all
 
 npx nx run repo:build-libs
 npx nx run repo:build-java-lib
@@ -136,9 +160,12 @@ npx nx run repo:install-ts-lib
 npx nx run repo:kafka-up
 npx nx run repo:topics
 npx nx run repo:kafka-down
+
 npx nx run repo:run-java
 npx nx run repo:run-python
 npx nx run repo:run-web
+
+npx nx run repo:demo
 ```
 
 The React form builds `DemoMessage` payloads that exercise every schema feature, including:
@@ -172,11 +199,10 @@ curl http://localhost:8000/messages/python/from-java | jq
 ## Demo workflow
 
 1. `make kafka-up && make topics`
-2. `make codegen` (if not already done)
-3. `make build-libs && make install-libs` (first time or after codegen)
-4. `make run-java` (port 8080)
-5. `make run-python` (port 8000)
-6. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
+2. `make install` (runs clean-all, codegen, build-libs, install-libs - use this for first time setup or after spec changes)
+3. `make run-java` (port 8080)
+4. `make run-python` (port 8000)
+5. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
 
 ## Swagger / OpenAPI UI
 
