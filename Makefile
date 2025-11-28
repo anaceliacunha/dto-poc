@@ -6,72 +6,15 @@ JAVA_SERVICE_DIR = services/java-app
 PYTHON_SERVICE_DIR = services/python-app
 WEBAPP_DIR = webapp/react-app
 
+# Include modular makefiles for different universes
+include makefiles/demo.mk
+
 # Full install: clean, codegen, build, and install all libraries
 install: clean-all codegen build-libs install-libs
 	@echo "Complete installation finished."
 
-codegen-java-models:
-	openapi-generator generate \
-	  -i openapi/openapi-models.yaml \
-	  -g java \
-	  -o $(JAVA_LIB_DIR) \
-	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --global-property models,modelTests=false \
-	  --additional-properties=library=resttemplate,modelPackage=com.activate.models,hideGenerationTimestamp=true,dateLibrary=java8,sourceCompatibility=1.8,targetCompatibility=1.8,useJakartaEe=false
-
-codegen-java-api:
-	openapi-generator generate \
-	  -i openapi/openapi-api.yaml \
-	  -g spring \
-	  -o $(JAVA_LIB_DIR) \
-	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,apiTests=false,supportingFiles=ApiUtil.java \
-	  --additional-properties=useSpringBoot3=false,interfaceOnly=false,hideGenerationTimestamp=true,dateLibrary=java8,serializationLibrary=jackson,apiPackage=com.activate.apis,modelPackage=com.activate.models,useJakartaEe=false
-
-codegen-python-models:
-	openapi-generator generate \
-	  -i openapi/openapi-models.yaml \
-	  -g python \
-	  -o $(PYTHON_LIB_DIR) \
-	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --global-property models,supportingFiles,modelTests=false \
-	  --additional-properties=packageName=activate_api_models
-	@# Move package to src/ to match python-fastapi structure
-	mkdir -p $(PYTHON_LIB_DIR)/src
-	mv $(PYTHON_LIB_DIR)/activate_api_models $(PYTHON_LIB_DIR)/src/
-
-codegen-python-api:
-	openapi-generator generate \
-	  -i openapi/openapi-api.yaml \
-	  -g python-fastapi \
-	  -o $(PYTHON_LIB_DIR) \
-	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,models,supportingFiles,apiTests=false \
-	  --additional-properties=packageName=activate_api_models
-
-codegen-ts-models:
-	openapi-generator generate \
-	  -i openapi/openapi-models.yaml \
-	  -g typescript \
-	  -o $(TS_LIB_DIR)/src \
-	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --type-mappings binary=string,Date=string,DateTime=string \
-	  --global-property models \
-	  --additional-properties=modelPropertyNaming=original,supportsES6=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models
-	@# Remove HttpFile imports that the generator creates
-	find $(TS_LIB_DIR)/src/models -name "*.ts" -exec sed -i '' "/import.*HttpFile.*from.*'\.\.\/http\/http'/d" {} \;
-
-
-codegen-react-api:
-	openapi-generator generate \
-	  -i openapi/openapi-api.yaml \
-	  -g typescript-fetch \
-	  -o $(TS_LIB_DIR)/src \
-	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,models,supportingFiles \
-	  --additional-properties=modelPropertyNaming=original,supportsES6=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models
-
-codegen: codegen-java-models codegen-java-api codegen-python-api codegen-react-api
+# Generate all code across all universes
+codegen: codegen-demo
 
 # Clean generated code
 clean-codegen:
@@ -157,7 +100,7 @@ demo:
 	@echo "2. make topics"
 	@echo "3. make run-java | make run-python | make run-web"
 
-.PHONY: codegen codegen-java-models codegen-java-api codegen-python-models codegen-python-api codegen-ts-models codegen-react-api
+.PHONY: codegen
 .PHONY: clean-codegen clean-build clean-all
 .PHONY: build-libs build-java-lib build-python-lib build-ts-lib
 .PHONY: install-libs install-java-lib install-python-lib install-ts-lib

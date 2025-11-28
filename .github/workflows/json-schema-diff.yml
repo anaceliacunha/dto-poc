@@ -6,7 +6,7 @@ on:
       - main
       - develop
     paths:
-      - 'openapi/schemas/**'
+      - '../../openapi/demo/schemas/**'
 
 jobs:
   json-schema-diff:
