@@ -6,7 +6,7 @@ on:
       - main
       - develop
     paths:
-      - '../../openapi/demo/schemas/**'
+      - 'openapi/demo/schemas/**'
 
 jobs:
   json-schema-diff:
@@ -46,7 +46,7 @@ jobs:
           mkdir -p /tmp/base-schemas
           
           # Check each JSON schema file
-          for schema in openapi/schemas/*.json; do
+          for schema in openapi/demo/schemas/*.json; do
             if [ -f "$schema" ]; then
               filename=$(basename "$schema")
               echo ""
@@ -100,11 +100,11 @@ jobs:
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
           
           if [ "$schemas_status" = "success" ]; then
-            echo "| openapi/schemas/*.json | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+            echo "| openapi/demo/schemas/*.json | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
           elif [ "$schemas_status" = "failure" ]; then
-            echo "| openapi/schemas/*.json | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
+            echo "| openapi/demo/schemas/*.json | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| openapi/schemas/*.json | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
+            echo "| openapi/demo/schemas/*.json | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
           fi
       
       - name: Fail if breaking changes detected
