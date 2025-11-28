@@ -56,9 +56,11 @@ class KafkaBridge:
                     if self._stop_event.is_set():
                         break
                     try:
+                        logger.debug("Received raw message: %s", record.value)
                         dto = DemoMessage.model_validate(record.value)
                     except Exception as exc:  # ValidationError or others
                         logger.warning("Skipping invalid record on %s: %s", record.topic, exc)
+                        logger.debug("Invalid record data: %s", record.value)
                         continue
                     self._store.add_java(dto)
             except AssertionError:

@@ -9,15 +9,20 @@ dto-poc/
 │  ├─ openapi-models.yaml       ← Only shared schemas
 │  ├─ schemas/*.schema.json     ← Draft 2020-12 JSON Schemas
 │  └─ samples/*.json            ← Null / empty / precision payloads
-├─ gen/
-│  ├─ java-models/src/main/java/demo/dto     ← shared Java DTOs
-│  ├─ python-models/py_models                ← shared Python DTOs
-│  ├─ ts-models                              ← shared TypeScript DTOs
-│  ├─ java-api / python-api / react-api      ← generator output stubs
-├─ libs/                         ← **NEW: Packaged libraries**
-│  ├─ java-lib/                  ← Maven config to build JAR from gen/
-│  ├─ python-lib/                ← Python packaging to build wheel from gen/
-│  └─ ts-lib/                    ← NPM config to build package from gen/
+├─ libs/                         ← Packaged libraries (OpenAPI generates directly here)
+│  ├─ java-lib/                  ← Maven project with generated code
+│  │  └─ src/main/java/com/activate/
+│  │     ├─ apis/                ← Generated API classes
+│  │     └─ models/              ← Generated model classes
+│  ├─ python-lib/                ← Python package with generated code
+│  │  └─ src/activate_api_models/
+│  │     ├─ apis/                ← Generated API classes
+│  │     └─ models/              ← Generated model classes
+│  └─ ts-lib/                    ← NPM package with generated code
+│     └─ src/
+│        ├─ apis/                ← Generated API classes
+│        ├─ models/              ← Generated model classes
+│        └─ api/                 ← React API client
 ├─ services/
 │  ├─ java-app/      ← Spring Boot REST + Kafka (uses activate-api-models JAR)
 │  └─ python-app/    ← FastAPI REST + Kafka (uses activate-api-models wheel)
@@ -33,25 +38,28 @@ dto-poc/
 
 ## Code generation
 
-The `Makefile` locks down generator output destinations and now applies explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
+The `Makefile` generates OpenAPI code directly into the library directories, applying explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
 
 ```bash
 make codegen                 # runs every generator (Java/Python/TS models + APIs)
-make codegen-java-models     # regenerate just the shared Java DTOs
-make codegen-java-api        # regenerate Spring API stubs
-make codegen-python-models   # regenerate pydantic models
-make codegen-python-api      # regenerate FastAPI stubs (BaseDefaultApi, routers, etc.)
-make codegen-react-api    # regenerate the TypeScript fetch client (models + apis)
-make codegen-ts-models       # regenerate TypeScript DTOs used by both React and other TS consumers
+make codegen-java-models     # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
+make codegen-java-api        # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
+make codegen-python-models   # regenerate Python models in libs/python-lib/src/activate_api_models/models/
+make codegen-python-api      # regenerate FastAPI in libs/python-lib/src/activate_api_models/apis/
+make codegen-ts-models       # regenerate TypeScript models in libs/ts-lib/src/models/
+make codegen-react-api       # regenerate React API client in libs/ts-lib/src/apis/
 ```
 
-DTOs live under:
+Generated code locations:
 
-| Language | Folder |
-| --- | --- |
-| Java | `gen/java-models/src/main/java/demo/dto` |
-| Python | `gen/python-models/activate_api_models` |
-| TypeScript | `gen/ts-models` |
+| Language | Package | Directory |
+| --- | --- | --- |
+| Java | com.activate.models | `libs/java-lib/src/main/java/com/activate/models/` |
+| Java | com.activate.apis | `libs/java-lib/src/main/java/com/activate/apis/` |
+| Python | activate_api_models.models | `libs/python-lib/src/activate_api_models/models/` |
+| Python | activate_api_models.apis | `libs/python-lib/src/activate_api_models/apis/` |
+| TypeScript | @activate/api-models | `libs/ts-lib/src/models/` |
+| TypeScript | @activate/api-models/api | `libs/ts-lib/src/api/` |
 
 **How services consume the DTOs:**
 - **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`) from local Maven repository (or remote Maven repository after publishing)
@@ -82,6 +90,24 @@ make publish-java-lib   # (Optional) Publish Java library to Maven repository
 make install-libs   # Install to consuming applications
 ```
 
+Or use the all-in-one command:
+
+```bash
+make install        # Clean all, codegen, build, and install libraries
+```
+
+## Clean commands
+
+```bash
+make clean-codegen  # Remove all generated OpenAPI code (Java, Python, TypeScript)
+make clean-build    # Remove build artifacts (target/, dist/, build/)
+make clean-all      # Run both clean-codegen and clean-build
+```
+
+**Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
+
+## Installing service dependencies
+
 Install service deps once:
 
 ```bash
@@ -104,39 +130,6 @@ make kafka-down  # podman-compose down
 make run-java      # Spring Boot on :8080 (uses activate-api-models JAR from Maven repo)
 make run-python    # FastAPI on :8000 (uses activate-api-models wheel package)
 make run-web       # React + Vite on :5173 (uses @activate/api-models NPM package)
-```
-
-## Nx wrappers for Make targets
-
-A Nx workspace mirrors the Makefile so you can run the same tasks via `nx`:
-
-```bash
-npm install   # installs Nx locally (required once)
-
-npx nx run repo:codegen
-npx nx run repo:codegen-java-models
-npx nx run repo:codegen-java-api
-npx nx run repo:codegen-python-models
-npx nx run repo:codegen-python-api
-npx nx run repo:codegen-react-api
-npx nx run repo:codegen-ts-models
-
-npx nx run repo:build-libs
-npx nx run repo:build-java-lib
-npx nx run repo:build-python-lib
-npx nx run repo:build-ts-lib
-
-npx nx run repo:install-libs
-npx nx run repo:install-java-lib
-npx nx run repo:install-python-lib
-npx nx run repo:install-ts-lib
-
-npx nx run repo:kafka-up
-npx nx run repo:topics
-npx nx run repo:kafka-down
-npx nx run repo:run-java
-npx nx run repo:run-python
-npx nx run repo:run-web
 ```
 
 The React form builds `DemoMessage` payloads that exercise every schema feature, including:

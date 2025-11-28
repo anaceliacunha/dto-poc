@@ -4,15 +4,17 @@
   "description": "Generated DTO models and API for TypeScript/React",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "clean": "rm -rf dist src",
-    "copy": "npm run copy:models && npm run copy:api",
-    "copy:models": "mkdir -p src && cp -r ../../gen/ts-models/* src/",
-    "copy:api": "mkdir -p src/api && cp -r ../../gen/react-api/* src/api/",
-    "prebuild": "npm run clean && npm run copy",
+    "clean": "rm -rf dist",
     "build": "tsc",
     "prepare": "npm run build"
   },
