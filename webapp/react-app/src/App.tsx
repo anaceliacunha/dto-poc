@@ -2,10 +2,10 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import './styles.css';
-import type { DemoMessage as GeneratedDemoMessage } from '@activate/api-models/api';
-import { DemoMessageCategoryEnum, Item } from '@activate/api-models/api';
-import { DefaultApi } from '@activate/api-models/api';
-import { Configuration, ResponseError } from '@activate/api-models/api';
+import type { DemoMessage as GeneratedDemoMessage } from '@activate/api-models';
+import { DemoMessageCategoryEnum, Item } from '@activate/api-models';
+import { DefaultApi } from '@activate/api-models';
+import { Configuration } from '@activate/api-models';
 
 type DemoMessage = Omit<
     GeneratedDemoMessage,
@@ -129,10 +129,10 @@ const downloadBinaryData = (value: string, filename = 'binaryData.bin') => {
 };
 
 const mapGeneratedToLocal = (message: GeneratedDemoMessage): DemoMessage => {
-    const { _class, displayName, withSpace, snakeCase, createdAt, dateOnly, ...rest } = message;
+    const { _class, display_name, with_space, snake_case, createdAt, dateOnly, ...rest } = message;
     return {
         ...rest,
-        createdAt: createdAt.toISOString(),
+        createdAt: createdAt?.toISOString() ?? new Date().toISOString(),
         dateOnly:
             dateOnly instanceof Date
                 ? dayjs(dateOnly).format('YYYY-MM-DD')
@@ -140,9 +140,9 @@ const mapGeneratedToLocal = (message: GeneratedDemoMessage): DemoMessage => {
                     ? String(dateOnly)
                     : '',
         class: _class ?? null,
-        'display-name': displayName ?? null,
-        'with space': withSpace ?? null,
-        snake_case: snakeCase ?? ''
+        'display-name': display_name ?? null,
+        'with space': with_space ?? null,
+        snake_case: snake_case ?? ''
     };
 };
 
@@ -162,18 +162,19 @@ const mapLocalToGenerated = (message: DemoMessage): GeneratedDemoMessage => {
         createdAt: parseDateOrNow(createdAt),
         dateOnly: parseDate(dateOnly) ?? undefined,
         _class: classValue ?? undefined,
-        displayName: displayName ?? undefined,
-        withSpace: withSpace ?? undefined,
-        snakeCase: snake_case ?? undefined
+        display_name: displayName ?? undefined,
+        with_space: withSpace ?? undefined,
+        snake_case: snake_case ?? undefined
     };
 };
 
 const formatApiError = async (error: unknown): Promise<string> => {
-    if (error instanceof ResponseError) {
+    if (error instanceof Response) {
         try {
-            return await error.response.text();
+            const text = await error.text();
+            return text || error.statusText;
         } catch {
-            return error.message;
+            return error.statusText;
         }
     }
     if (error instanceof Error) {

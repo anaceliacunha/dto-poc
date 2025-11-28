@@ -1,10 +1,15 @@
 # DTO Libraries
 
-This directory contains packaging configurations for distributing the generated DTOs and APIs as reusable libraries.
+This directory contains the generated OpenAPI code and packaging configurations for distributing DTOs and APIs as reusable libraries.
 
 ## Overview
 
-The `gen/` folder contains auto-generated code from OpenAPI specifications. Since this code is frequently regenerated and deleted, we use the `libs/` folder to maintain stable packaging configurations that copy from `gen/` during the build process.
+OpenAPI generators write code directly into these library directories:
+- `libs/java-lib/src/main/java/com/activate/` - Java models and APIs
+- `libs/python-lib/activate_api_models/` - Python models and APIs  
+- `libs/ts-lib/src/` - TypeScript models and APIs
+
+The build process compiles/packages this generated code without any intermediate copying steps.
 
 ## Directory Structure
 
@@ -57,7 +62,7 @@ make install-ts-lib      # Install NPM package to React app
 ### Java Library (`java-lib`)
 
 **What it does:**
-- Copies sources from `gen/java-models` and `gen/java-api` during build
+- Receives generated sources directly from OpenAPI generator
 - Packages into a single JAR with Maven
 - Installs to local Maven repository
 
@@ -73,12 +78,13 @@ mvn clean install
 - GroupId: `com.activate`
 - ArtifactId: `activate-api-models`
 - Version: `1.0.0-SNAPSHOT`
+- Packages: `com.activate.models`, `com.activate.apis`
 
 ### Python Library (`python-lib`)
 
 **What it does:**
-- Copies sources from `gen/python-models` and `gen/python-api` during build
-- Packages into a Python wheel
+- Receives generated sources directly from OpenAPI generator
+- Packages into a Python wheel using standard setuptools
 - Combines models and API into a single `activate_api_models` package
 
 **Used by:** `services/python-app`
@@ -90,11 +96,12 @@ python -m build
 ```
 
 **Package name:** `activate-api-models` (imports as `activate_api_models`)
+**Modules:** `activate_api_models.models`, `activate_api_models.apis`
 
 ### TypeScript/React Library (`ts-lib`)
 
 **What it does:**
-- Copies sources from `gen/ts-models` and `gen/react-api` during build
+- Receives generated sources directly from OpenAPI generator
 - Compiles TypeScript to JavaScript
 - Generates type definitions
 - Creates an NPM package
@@ -109,6 +116,7 @@ npm run build
 ```
 
 **Package name:** `@activate/api-models`
+**Exports:** Main export for models, `/api` export for API client
 
 ## Workflow
 
@@ -118,7 +126,7 @@ npm run build
 make codegen
 ```
 
-This regenerates all code in the `gen/` folder from OpenAPI specs.
+This generates all code directly into the library directories from OpenAPI specs.
 
 ### 2. Build Libraries
 
@@ -126,7 +134,7 @@ This regenerates all code in the `gen/` folder from OpenAPI specs.
 make build-libs
 ```
 
-This packages the generated code into distributable libraries.
+This compiles and packages the generated code into distributable libraries.
 
 ### 3. Install Libraries
 

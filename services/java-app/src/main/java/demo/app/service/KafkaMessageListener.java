@@ -1,6 +1,6 @@
 package demo.app.service;
 
-import demo.dto.DemoMessage;
+import com.activate.models.DemoMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.kafka.annotation.KafkaListener;

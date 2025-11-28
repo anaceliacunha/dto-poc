@@ -9,15 +9,20 @@ dto-poc/
 │  ├─ openapi-models.yaml       ← Only shared schemas
 │  ├─ schemas/*.schema.json     ← Draft 2020-12 JSON Schemas
 │  └─ samples/*.json            ← Null / empty / precision payloads
-├─ gen/
-│  ├─ java-models/src/main/java/demo/dto     ← shared Java DTOs
-│  ├─ python-models/py_models                ← shared Python DTOs
-│  ├─ ts-models                              ← shared TypeScript DTOs
-│  ├─ java-api / python-api / react-api      ← generator output stubs
-├─ libs/                         ← **NEW: Packaged libraries**
-│  ├─ java-lib/                  ← Maven config to build JAR from gen/
-│  ├─ python-lib/                ← Python packaging to build wheel from gen/
-│  └─ ts-lib/                    ← NPM config to build package from gen/
+├─ libs/                         ← Packaged libraries (OpenAPI generates directly here)
+│  ├─ java-lib/                  ← Maven project with generated code
+│  │  └─ src/main/java/com/activate/
+│  │     ├─ apis/                ← Generated API classes
+│  │     └─ models/              ← Generated model classes
+│  ├─ python-lib/                ← Python package with generated code
+│  │  └─ activate_api_models/
+│  │     ├─ apis/                ← Generated API classes
+│  │     └─ models/              ← Generated model classes
+│  └─ ts-lib/                    ← NPM package with generated code
+│     └─ src/
+│        ├─ apis/                ← Generated API classes
+│        ├─ models/              ← Generated model classes
+│        └─ api/                 ← React API client
 ├─ services/
 │  ├─ java-app/      ← Spring Boot REST + Kafka (uses activate-api-models JAR)
 │  └─ python-app/    ← FastAPI REST + Kafka (uses activate-api-models wheel)
@@ -33,25 +38,28 @@ dto-poc/
 
 ## Code generation
 
-The `Makefile` locks down generator output destinations and now applies explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
+The `Makefile` generates OpenAPI code directly into the library directories, applying explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
 
 ```bash
 make codegen                 # runs every generator (Java/Python/TS models + APIs)
-make codegen-java-models     # regenerate just the shared Java DTOs
-make codegen-java-api        # regenerate Spring API stubs
-make codegen-python-models   # regenerate pydantic models
-make codegen-python-api      # regenerate FastAPI stubs (BaseDefaultApi, routers, etc.)
-make codegen-react-api    # regenerate the TypeScript fetch client (models + apis)
-make codegen-ts-models       # regenerate TypeScript DTOs used by both React and other TS consumers
+make codegen-java-models     # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
+make codegen-java-api        # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
+make codegen-python-models   # regenerate Python models in libs/python-lib/activate_api_models/models/
+make codegen-python-api      # regenerate FastAPI in libs/python-lib/activate_api_models/apis/
+make codegen-ts-models       # regenerate TypeScript models in libs/ts-lib/src/models/
+make codegen-react-api       # regenerate React API client in libs/ts-lib/src/apis/
 ```
 
-DTOs live under:
+Generated code locations:
 
-| Language | Folder |
-| --- | --- |
-| Java | `gen/java-models/src/main/java/demo/dto` |
-| Python | `gen/python-models/activate_api_models` |
-| TypeScript | `gen/ts-models` |
+| Language | Package | Directory |
+| --- | --- | --- |
+| Java | com.activate.models | `libs/java-lib/src/main/java/com/activate/models/` |
+| Java | com.activate.apis | `libs/java-lib/src/main/java/com/activate/apis/` |
+| Python | activate_api_models.models | `libs/python-lib/activate_api_models/models/` |
+| Python | activate_api_models.apis | `libs/python-lib/activate_api_models/apis/` |
+| TypeScript | @activate/api-models | `libs/ts-lib/src/models/` |
+| TypeScript | @activate/api-models/api | `libs/ts-lib/src/api/` |
 
 **How services consume the DTOs:**
 - **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`)
