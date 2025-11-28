@@ -1,75 +1,135 @@
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-JAVA_MODEL_DIR = gen/java-models
-JAVA_API_DIR   = gen/java-api
-PY_MODEL_DIR   = gen/python-models
-TS_MODEL_GEN_DIR = gen/ts-models
-TS_MODEL_DST_DIR = webapp/react-app/src/api
-PY_API_DIR     = gen/python-api
-REACT_API_GEN_DIR = gen/react-api
-REACT_API_DST_DIR  = webapp/react-app/src/api
+JAVA_LIB_DIR = libs/java-lib
+PYTHON_LIB_DIR = libs/python-lib
+TS_LIB_DIR = libs/ts-lib
 JAVA_SERVICE_DIR = services/java-app
 PYTHON_SERVICE_DIR = services/python-app
 WEBAPP_DIR = webapp/react-app
 
+# Full install: clean, codegen, build, and install all libraries
+install: clean-all codegen build-libs install-libs
+	@echo "Complete installation finished."
 
 codegen-java-models:
 	openapi-generator generate \
 	  -i openapi/openapi-models.yaml \
 	  -g java \
-	  -o $(JAVA_MODEL_DIR) \
+	  -o $(JAVA_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --global-property models  \
-	  --additional-properties=library=resttemplate,modelPackage=demo.dto,hideGenerationTimestamp=true,dateLibrary=java8,sourceCompatibility=1.8,targetCompatibility=1.8,useJakartaEe=false
+	  --global-property models,modelTests=false \
+	  --additional-properties=library=resttemplate,modelPackage=com.activate.models,hideGenerationTimestamp=true,dateLibrary=java8,sourceCompatibility=1.8,targetCompatibility=1.8,useJakartaEe=false
 
 codegen-java-api:
 	openapi-generator generate \
 	  -i openapi/openapi-api.yaml \
 	  -g spring \
-	  -o $(JAVA_API_DIR) \
+	  -o $(JAVA_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,supportingFiles=ApiUtil.java \
-	  --additional-properties=useSpringBoot3=false,interfaceOnly=false,hideGenerationTimestamp=true,dateLibrary=java8,serializationLibrary=jackson,packageName=demo.api,modelPackage=demo.dto,useJakartaEe=false
+	  --global-property apis,apiTests=false,supportingFiles=ApiUtil.java \
+	  --additional-properties=useSpringBoot3=false,interfaceOnly=false,hideGenerationTimestamp=true,dateLibrary=java8,serializationLibrary=jackson,apiPackage=com.activate.apis,modelPackage=com.activate.models,useJakartaEe=false
 
 codegen-python-models:
 	openapi-generator generate \
 	  -i openapi/openapi-models.yaml \
 	  -g python \
-	  -o $(PY_MODEL_DIR) \
+	  -o $(PYTHON_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --global-property models \
-	  --additional-properties=packageName=py_models
-
+	  --global-property models,supportingFiles,modelTests=false \
+	  --additional-properties=packageName=activate_api_models
+	@# Move package to src/ to match python-fastapi structure
+	mkdir -p $(PYTHON_LIB_DIR)/src
+	mv $(PYTHON_LIB_DIR)/activate_api_models $(PYTHON_LIB_DIR)/src/
 
 codegen-python-api:
 	openapi-generator generate \
 	  -i openapi/openapi-api.yaml \
 	  -g python-fastapi \
-	  -o $(PY_API_DIR) \
+	  -o $(PYTHON_LIB_DIR) \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,supportingFiles \
-	  --additional-properties=packageName=kafka_api,modelPackage=py_models.models
+	  --global-property apis,models,supportingFiles,apiTests=false \
+	  --additional-properties=packageName=activate_api_models
 
 codegen-ts-models:
 	openapi-generator generate \
 	  -i openapi/openapi-models.yaml \
 	  -g typescript \
-	  -o $(TS_MODEL_GEN_DIR) \
+	  -o $(TS_LIB_DIR)/src \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage,DemoMessage1Items=Item \
-	  --type-mappings HttpFile=string,binary=string,Date=string,DateTime=string \
-	  --import-mappings HttpFile=string \
-	  --global-property models,supportingFiles \
-	  --additional-properties=modelPropertyNaming=original,supportsES6=true
+	  --type-mappings binary=string,Date=string,DateTime=string \
+	  --global-property models \
+	  --additional-properties=modelPropertyNaming=original,supportsES6=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models
+	@# Remove HttpFile imports that the generator creates
+	find $(TS_LIB_DIR)/src/models -name "*.ts" -exec sed -i '' "/import.*HttpFile.*from.*'\.\.\/http\/http'/d" {} \;
 
 
-codegen-react-client:
+codegen-react-api:
 	openapi-generator generate \
 	  -i openapi/openapi-api.yaml \
 	  -g typescript-fetch \
-	  -o $(REACT_API_GEN_DIR) \
+	  -o $(TS_LIB_DIR)/src \
 	  --inline-schema-name-mappings DemoMessage1=DemoMessage,DemoMessage2=DemoMessage \
-	  --global-property apis,models,supportingFiles
+	  --global-property apis,models,supportingFiles \
+	  --additional-properties=modelPropertyNaming=original,supportsES6=true,withSeparateModelsAndApi=true,apiPackage=apis,modelPackage=models
 
-codegen: codegen-java-models codegen-java-api codegen-python-models codegen-python-api codegen-ts-models codegen-react-client
+codegen: codegen-java-models codegen-java-api codegen-python-api codegen-react-api
+
+# Clean generated code
+clean-codegen:
+	@echo "Cleaning generated code..."
+	@# Java library - remove generated sources, docs, and OpenAPI artifacts
+	rm -rf $(JAVA_LIB_DIR)/src/
+	rm -rf $(JAVA_LIB_DIR)/docs/
+	rm -rf $(JAVA_LIB_DIR)/.openapi-generator/
+	rm -f $(JAVA_LIB_DIR)/.openapi-generator-ignore
+	@# Python library - remove entire directory (will be recreated by codegen)
+	rm -rf $(PYTHON_LIB_DIR)
+	@# TypeScript library - remove generated sources and OpenAPI artifacts
+	rm -rf $(TS_LIB_DIR)/src/
+	rm -rf $(TS_LIB_DIR)/docs/
+	@echo "Generated code cleaned."
+
+# Clean build artifacts
+clean-build:
+	@echo "Cleaning build artifacts..."
+	rm -rf $(JAVA_LIB_DIR)/target/
+	rm -rf $(PYTHON_LIB_DIR)/build/ $(PYTHON_LIB_DIR)/dist/ $(PYTHON_LIB_DIR)/src/*.egg-info
+	rm -rf $(TS_LIB_DIR)/dist/
+	rm -rf $(JAVA_SERVICE_DIR)/target/
+	rm -rf $(WEBAPP_DIR)/dist/
+	@echo "Build artifacts cleaned."
+
+# Clean everything (generated code + build artifacts)
+clean-all: clean-codegen clean-build
+	@echo "All cleaned."
+
+# Build library packages
+build-java-lib:
+	cd libs/java-lib && mvn clean install
+
+build-python-lib:
+	@if [ ! -d "$(PYTHON_SERVICE_DIR)/.venv" ]; then \
+		echo "Creating Python venv for build..."; \
+		cd $(PYTHON_SERVICE_DIR) && python3 -m venv .venv && .venv/bin/pip install --upgrade pip setuptools wheel; \
+	fi
+	@echo "Building Python library..."
+	cd libs/python-lib && rm -rf build dist *.egg-info && ../../$(PYTHON_SERVICE_DIR)/.venv/bin/python -m build
+
+build-ts-lib:
+	cd libs/ts-lib && npm install && npm run build
+
+build-libs: build-java-lib build-python-lib build-ts-lib
+
+# Install libraries to consuming applications
+install-java-lib: build-java-lib
+	@echo "Java library installed to local Maven repository (~/.m2/repository)"
+
+install-python-lib: build-python-lib
+	cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+
+install-ts-lib: build-ts-lib
+	cd $(WEBAPP_DIR) && npm install ../../libs/ts-lib
+
+install-libs: install-java-lib install-python-lib install-ts-lib
 
 kafka-up:
 	cd infra && podman-compose up -d
@@ -85,11 +145,9 @@ run-java:
 	cd $(JAVA_SERVICE_DIR) && mvn spring-boot:run
 
 run-python:
-	cd $(PYTHON_SERVICE_DIR) && PYTHONPATH=../../gen/python-models:../../gen/python-api/src .venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd $(PYTHON_SERVICE_DIR) && .venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 run-web:
-	mkdir -p $(REACT_API_DST_DIR)
-	rsync -a --delete $(REACT_API_GEN_DIR)/ $(REACT_API_DST_DIR)/
 	cd $(WEBAPP_DIR) && npm install && npm run dev
 
 .PHONY: demo
@@ -98,3 +156,9 @@ demo:
 	@echo "1. make kafka-up"
 	@echo "2. make topics"
 	@echo "3. make run-java | make run-python | make run-web"
+
+.PHONY: codegen codegen-java-models codegen-java-api codegen-python-models codegen-python-api codegen-ts-models codegen-react-api
+.PHONY: clean-codegen clean-build clean-all
+.PHONY: build-libs build-java-lib build-python-lib build-ts-lib
+.PHONY: install-libs install-java-lib install-python-lib install-ts-lib
+

@@ -9,15 +9,24 @@ dto-poc/
 │  ├─ openapi-models.yaml       ← Only shared schemas
 │  ├─ schemas/*.schema.json     ← Draft 2020-12 JSON Schemas
 │  └─ samples/*.json            ← Null / empty / precision payloads
-├─ gen/
-│  ├─ java-models/src/main/java/demo/dto     ← shared Java DTOs
-│  ├─ python-models/py_models                ← shared Python DTOs
-│  ├─ ts-models                              ← shared TypeScript DTOs (synced into webapp/react-app/src/models)
-│  ├─ java-api / python-api / react-client   ← generator output stubs
+├─ libs/                         ← Packaged libraries (OpenAPI generates directly here)
+│  ├─ java-lib/                  ← Maven project with generated code
+│  │  └─ src/main/java/com/activate/
+│  │     ├─ apis/                ← Generated API classes
+│  │     └─ models/              ← Generated model classes
+│  ├─ python-lib/                ← Python package with generated code
+│  │  └─ src/activate_api_models/
+│  │     ├─ apis/                ← Generated API classes
+│  │     └─ models/              ← Generated model classes
+│  └─ ts-lib/                    ← NPM package with generated code
+│     └─ src/
+│        ├─ apis/                ← Generated API classes
+│        ├─ models/              ← Generated model classes
+│        └─ api/                 ← React API client
 ├─ services/
-│  ├─ java-app/      ← Spring Boot REST + Kafka producer/consumer
-│  └─ python-app/    ← FastAPI REST + kafka-python bridge
-├─ webapp/react-app/ ← React + Vite UI + TypeScript client demo (+ generated TS models/client)
+│  ├─ java-app/      ← Spring Boot REST + Kafka (uses activate-api-models JAR)
+│  └─ python-app/    ← FastAPI REST + Kafka (uses activate-api-models wheel)
+├─ webapp/react-app/ ← React + Vite UI (uses @activate/api-models NPM package)
 └─ infra/            ← Kafka + Zookeeper via Podman Compose
 ```
 
@@ -29,27 +38,35 @@ dto-poc/
 
 ## Code generation
 
-The `Makefile` locks down generator output destinations and now applies explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
+The `Makefile` generates OpenAPI code directly into the library directories, applying explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
 
 ```bash
 make codegen                 # runs every generator (Java/Python/TS models + APIs)
-make codegen-java-models     # regenerate just the shared Java DTOs
-make codegen-java-api        # regenerate Spring API stubs
-make codegen-python-models   # regenerate pydantic models
-make codegen-python-api      # regenerate FastAPI stubs (BaseDefaultApi, routers, etc.)
-make codegen-react-client    # regenerate the TypeScript fetch client (models + apis)
-make codegen-ts-models       # regenerate TypeScript DTOs used by both React and other TS consumers
+make codegen-java-models     # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
+make codegen-java-api        # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
+make codegen-python-models   # regenerate Python models in libs/python-lib/src/activate_api_models/models/
+make codegen-python-api      # regenerate FastAPI in libs/python-lib/src/activate_api_models/apis/
+make codegen-ts-models       # regenerate TypeScript models in libs/ts-lib/src/models/
+make codegen-react-api       # regenerate React API client in libs/ts-lib/src/apis/
 ```
 
-DTOs live under:
+Generated code locations:
 
-| Language | Folder |
-| --- | --- |
-| Java | `gen/java-models/src/main/java/demo/dto` |
-| Python | `gen/python-models/py_models` |
-| TypeScript | `gen/ts-models` (synced into `webapp/react-app/src/models` before the Vite dev server starts) |
+| Language | Package | Directory |
+| --- | --- | --- |
+| Java | com.activate.models | `libs/java-lib/src/main/java/com/activate/models/` |
+| Java | com.activate.apis | `libs/java-lib/src/main/java/com/activate/apis/` |
+| Python | activate_api_models.models | `libs/python-lib/src/activate_api_models/models/` |
+| Python | activate_api_models.apis | `libs/python-lib/src/activate_api_models/apis/` |
+| TypeScript | @activate/api-models | `libs/ts-lib/src/models/` |
+| TypeScript | @activate/api-models/api | `libs/ts-lib/src/api/` |
 
-Spring’s `build-helper-maven-plugin` automatically adds the Java shared folder to the compile classpath, while the FastAPI server runs with `PYTHONPATH=../../gen/python-models` (see the `Makefile`). The React app now consumes the generated fetch client under `webapp/react-app/src/api/` and the shared models under `gen/ts-models/`.
+**How services consume the DTOs:**
+- **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`)
+- **Python**: Uses the packaged wheel as a pip package (`activate-api-models`), imports as `activate_api_models`
+- **React**: Uses the packaged NPM library (`@activate/api-models`)
+
+See `libs/README.md` for details on the library packaging system.
 
 ## Runtime prerequisites
 
@@ -58,6 +75,32 @@ Spring’s `build-helper-maven-plugin` automatically adds the Java shared folder
 * Node 18+
 * Podman + Podman Compose (`brew install podman podman-compose`; swap back to Docker Compose if you prefer Docker)
 * openapi-generator CLI (7.17.0 or newer) available on your PATH (`brew install openapi-generator` or `npm i -g @openapitools/openapi-generator-cli`) for the codegen targets
+
+After generating code, build and install the libraries:
+
+```bash
+make codegen        # Generate code from OpenAPI specs
+make build-libs     # Package into JAR, wheel, and NPM package
+make install-libs   # Install to consuming applications
+```
+
+Or use the all-in-one command:
+
+```bash
+make install        # Clean all, codegen, build, and install libraries
+```
+
+## Clean commands
+
+```bash
+make clean-codegen  # Remove all generated OpenAPI code (Java, Python, TypeScript)
+make clean-build    # Remove build artifacts (target/, dist/, build/)
+make clean-all      # Run both clean-codegen and clean-build
+```
+
+**Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
+
+## Installing service dependencies
 
 Install service deps once:
 
@@ -78,34 +121,9 @@ make kafka-down  # podman-compose down
 ## Run the services
 
 ```bash
-make run-java      # Spring Boot on :8080 (REST + Kafka)
-make run-python    # FastAPI on :8000 (REST + Kafka)
-make run-web       # React + Vite on :5173 (rsyncs gen/react-api + gen/ts-models into src/ before starting)
-```
-
-> Tip: when running the Python service manually, export `PYTHONPATH=../../gen/python-models` and invoke `.venv/bin/python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` so the generated `py_models` package stays on the import path.
-
-## Nx wrappers for Make targets
-
-An Nx workspace mirrors the Makefile so you can run the same tasks via `nx`:
-
-```bash
-npm install   # installs Nx locally (required once)
-
-npx nx run repo:codegen
-npx nx run repo:codegen-java-models
-npx nx run repo:codegen-java-api
-npx nx run repo:codegen-python-models
-npx nx run repo:codegen-python-api
-npx nx run repo:codegen-react-client
-npx nx run repo:codegen-ts-models
-
-npx nx run repo:kafka-up
-npx nx run repo:topics
-npx nx run repo:kafka-down
-npx nx run repo:run-java
-npx nx run repo:run-python
-npx nx run repo:run-web
+make run-java      # Spring Boot on :8080 (uses activate-api-models JAR from Maven repo)
+make run-python    # FastAPI on :8000 (uses activate-api-models wheel package)
+make run-web       # React + Vite on :5173 (uses @activate/api-models NPM package)
 ```
 
 The React form builds `DemoMessage` payloads that exercise every schema feature, including:
@@ -139,9 +157,10 @@ curl http://localhost:8000/messages/python/from-java | jq
 ## Demo workflow
 
 1. `make kafka-up && make topics`
-2. `make run-java` (port 8080)
-3. `make run-python` (port 8000)
-4. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
+2. `make install` (runs clean-all, codegen, build-libs, install-libs - use this for first time setup or after spec changes)
+3. `make run-java` (port 8080)
+4. `make run-python` (port 8000)
+5. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
 
 ## Swagger / OpenAPI UI
 

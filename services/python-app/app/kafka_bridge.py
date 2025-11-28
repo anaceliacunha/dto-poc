@@ -7,7 +7,7 @@ from typing import Optional
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 import logging
-from py_models.models.demo_message import DemoMessage
+from activate_api_models.models.demo_message import DemoMessage
 
 from .config import Settings
 from .storage import MessageStore
@@ -56,11 +56,16 @@ class KafkaBridge:
                     if self._stop_event.is_set():
                         break
                     try:
+                        logger.debug("Received raw message: %s", record.value)
                         dto = DemoMessage.model_validate(record.value)
                     except Exception as exc:  # ValidationError or others
                         logger.warning("Skipping invalid record on %s: %s", record.topic, exc)
+                        logger.debug("Invalid record data: %s", record.value)
                         continue
                     self._store.add_java(dto)
+            except AssertionError:
+                # Consumer was closed, exit gracefully
+                break
             except KafkaError as exc:  # type: ignore[no-untyped-call]
                 logger.warning("Kafka consumer issue: %s", exc)
 

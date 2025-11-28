@@ -1,0 +1,40 @@
+{
+  "name": "@activate/api-models",
+  "version": "1.0.0",
+  "description": "Generated DTO models and API for TypeScript/React",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "dto",
+    "typescript",
+    "react",
+    "api"
+  ],
+  "peerDependencies": {
+    "react": ">=16.8.0"
+  },
+  "dependencies": {
+    "rxjs": "^7.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0"
+  },
+  "author": "",
+  "license": "MIT"
+}
