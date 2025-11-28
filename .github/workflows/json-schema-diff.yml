@@ -6,7 +6,7 @@ on:
       - main
       - develop
     paths:
-      - '../../openapi/demo/schemas/**'
+      - 'openapi/*/schemas/**'
 
 jobs:
   json-schema-diff:
@@ -45,40 +45,59 @@ jobs:
           # Create temp directory for base schemas
           mkdir -p /tmp/base-schemas
           
-          # Check each JSON schema file
-          for schema in openapi/schemas/*.json; do
-            if [ -f "$schema" ]; then
-              filename=$(basename "$schema")
-              echo ""
-              echo "========================================="
-              echo "Checking $schema..."
-              echo "========================================="
-              
-              # Get base version
-              if ! git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > /tmp/base-schemas/$filename 2>/dev/null; then
-                echo "⏭️ $filename is new, skipping..."
-                continue
-              fi
-              
-              # Check if files are different
-              if diff -q /tmp/base-schemas/$filename "$schema" > /dev/null 2>&1; then
-                echo "✅ No changes in $filename"
-                continue
-              fi
-              
-              echo "📝 File has changed, checking for breaking changes..."
-              
-              # Run json-schema-diff-validator
-              if json-schema-diff-validator /tmp/base-schemas/$filename $schema; then
-                echo "✅ No breaking changes in $filename"
-              else
-                exit_code=$?
-                if [ $exit_code -ne 0 ]; then
-                  echo "❌ Breaking changes detected in $filename"
-                  schemas_have_breaking=true
+          # Loop through each domain directory
+          for domain_dir in openapi/*/; do
+            domain=$(basename "$domain_dir")
+            schemas_dir="${domain_dir}schemas"
+            
+            if [ ! -d "$schemas_dir" ]; then
+              echo "⏭️ Skipping $domain (no schemas directory)"
+              continue
+            fi
+            
+            echo ""
+            echo "========================================="
+            echo "Checking schemas for domain: $domain"
+            echo "========================================="
+            
+            # Create domain-specific temp directory
+            mkdir -p "/tmp/base-schemas/$domain"
+            
+            # Check each JSON schema file in this domain
+            for schema in ${schemas_dir}/*.json; do
+              if [ -f "$schema" ]; then
+                filename=$(basename "$schema")
+                echo ""
+                echo "-----------------------------------------"
+                echo "Checking $domain/$filename..."
+                echo "-----------------------------------------"
+                
+                # Get base version
+                if ! git show origin/${{ steps.base-branch.outputs.base_ref }}:$schema > "/tmp/base-schemas/$domain/$filename" 2>/dev/null; then
+                  echo "⏭️ $filename is new in $domain, skipping..."
+                  continue
+                fi
+                
+                # Check if files are different
+                if diff -q "/tmp/base-schemas/$domain/$filename" "$schema" > /dev/null 2>&1; then
+                  echo "✅ No changes in $domain/$filename"
+                  continue
+                fi
+                
+                echo "📝 File has changed, checking for breaking changes..."
+                
+                # Run json-schema-diff-validator
+                if json-schema-diff-validator "/tmp/base-schemas/$domain/$filename" "$schema"; then
+                  echo "✅ No breaking changes in $domain/$filename"
+                else
+                  exit_code=$?
+                  if [ $exit_code -ne 0 ]; then
+                    echo "❌ Breaking changes detected in $domain/$filename"
+                    schemas_have_breaking=true
+                  fi
                 fi
               fi
-            fi
+            done
           done
           
           if [ "$schemas_have_breaking" = true ]; then
@@ -96,16 +115,24 @@ jobs:
           
           schemas_status="${{ steps.check-schemas.outcome }}"
           
-          echo "| Directory | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Domain | Schemas Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------------|" >> $GITHUB_STEP_SUMMARY
           
-          if [ "$schemas_status" = "success" ]; then
-            echo "| openapi/schemas/*.json | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
-          elif [ "$schemas_status" = "failure" ]; then
-            echo "| openapi/schemas/*.json | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| openapi/schemas/*.json | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
-          fi
+          # Show status for each domain
+          for domain_dir in openapi/*/; do
+            domain=$(basename "$domain_dir")
+            schemas_dir="${domain_dir}schemas"
+            
+            if [ -d "$schemas_dir" ] && compgen -G "${schemas_dir}/*.json" > /dev/null; then
+              if [ "$schemas_status" = "success" ]; then
+                echo "| $domain | ✅ No breaking changes |" >> $GITHUB_STEP_SUMMARY
+              elif [ "$schemas_status" = "failure" ]; then
+                echo "| $domain | ❌ Breaking changes detected |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| $domain | ⏭️ Skipped or not found |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
       
       - name: Fail if breaking changes detected
         if: steps.check-schemas.outcome == 'failure'
