@@ -5,10 +5,13 @@ This workspace wires two OpenAPI 3.1 specs into React, Spring Boot 2.7 (Java 8 c
 ```
 dto-poc/
 ├─ openapi/
-│  ├─ openapi-api.yaml          ← REST endpoints + $ref schemas
-│  ├─ openapi-models.yaml       ← Only shared schemas
-│  ├─ schemas/*.schema.json     ← Draft 2020-12 JSON Schemas
-│  └─ samples/*.json            ← Null / empty / precision payloads
+│  └─ demo/                      ← Demo domain schemas
+│     ├─ demo-api.yaml           ← REST endpoints + $ref schemas
+│     ├─ demo-models.yaml        ← Only shared schemas
+│     ├─ schemas/*.schema.json   ← Draft 2020-12 JSON Schemas
+│     └─ samples/*.json          ← Null / empty / precision payloads
+├─ makefiles/
+│  └─ demo.mk                    ← Demo domain codegen targets
 ├─ libs/                         ← Packaged libraries (OpenAPI generates directly here)
 │  ├─ java-lib/                  ← Maven project with generated code
 │  │  └─ src/main/java/com/activate/
@@ -32,23 +35,31 @@ dto-poc/
 
 ## OpenAPI + JSON Schema
 
-* `openapi/schemas/demo-message.schema.json` and `item.schema.json` use Draft 2020-12 and include all the exotic properties (binary, enums, unions, language restricted names, nullables, nested metrics, etc.).
-* `openapi/openapi-models.yaml` exposes components only. `openapi/openapi-api.yaml` imports the same schemas and adds `/messages/java` + `/messages/python` REST paths.
-* Sample payloads under `openapi/samples/` prove the null/empty/missing combinations that everything must handle.
+* `openapi/demo/schemas/demo-message.schema.json` and `item.schema.json` use Draft 2020-12 and include all the exotic properties (binary, enums, unions, language restricted names, nullables, nested metrics, etc.).
+* `openapi/demo/demo-models.yaml` exposes components only. `openapi/demo/demo-api.yaml` imports the same schemas and adds `/messages/java` + `/messages/python` REST paths.
+* Sample payloads under `openapi/demo/samples/` prove the null/empty/missing combinations that everything must handle.
 
 ## Code generation
 
-The `Makefile` generates OpenAPI code directly into the library directories, applying explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
+The `Makefile` orchestrates code generation across multiple domains. Each domain has its own makefile in `makefiles/` (e.g., `demo.mk`) that defines language-specific targets. The main `Makefile` includes these modular files and provides top-level aggregation.
+
+Code generation applies explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
 
 ```bash
-make codegen                 # runs every generator (Java/Python/TS models + APIs)
-make codegen-java-models     # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
-make codegen-java-api        # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
-make codegen-python-models   # regenerate Python models in libs/python-lib/src/activate_api_models/models/
-make codegen-python-api      # regenerate FastAPI in libs/python-lib/src/activate_api_models/apis/
-make codegen-ts-models       # regenerate TypeScript models in libs/ts-lib/src/models/
-make codegen-react-api       # regenerate React API client in libs/ts-lib/src/apis/
+make codegen                     # runs all domain generators (currently: demo)
+make codegen-demo                # generate all demo code (Java/Python/TS models + APIs)
+make codegen-demo-java           # generate demo Java code (models + API)
+make codegen-demo-python         # generate demo Python code (models + API)
+make codegen-demo-ts             # generate demo TypeScript code (models + API)
+make codegen-demo-java-models    # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
+make codegen-demo-java-api       # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
+make codegen-demo-python-models  # regenerate Python models in libs/python-lib/src/activate_api_models/models/
+make codegen-demo-python-api     # regenerate FastAPI in libs/python-lib/src/activate_api_models/apis/
+make codegen-demo-ts-models      # regenerate TypeScript models in libs/ts-lib/src/models/
+make codegen-demo-react-api      # regenerate React API client in libs/ts-lib/src/apis/
 ```
+
+**Adding new domains:** Create a new makefile (e.g., `makefiles/assortment.mk`) with domain-specific targets, then add `include makefiles/assortment.mk` to the main `Makefile` and update the `codegen` target to include `codegen-assortment`.
 
 Generated code locations:
 
@@ -150,11 +161,11 @@ Each POST call pushes to Kafka (`demo.from.java` or `demo.from.python`) and stor
 ```bash
 curl -X POST http://localhost:8080/messages/java \
   -H 'Content-Type: application/json' \
-  -d @openapi/samples/precision-roundtrip-sample.json
+  -d @openapi/demo/samples/precision-roundtrip-sample.json
 
 curl -X POST http://localhost:8000/messages/python \
   -H 'Content-Type: application/json' \
-  -d @openapi/samples/precision-roundtrip-sample.json
+  -d @openapi/demo/samples/precision-roundtrip-sample.json
 
 curl http://localhost:8080/messages/java/from-python | jq
 curl http://localhost:8000/messages/python/from-java | jq
