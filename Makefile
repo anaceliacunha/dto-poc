@@ -73,20 +73,8 @@ clean-codegen:
 	rm -rf $(JAVA_LIB_DIR)/docs/
 	rm -rf $(JAVA_LIB_DIR)/.openapi-generator/
 	rm -f $(JAVA_LIB_DIR)/.openapi-generator-ignore
-	@# Python library - remove generated sources and OpenAPI artifacts
-	rm -rf $(PYTHON_LIB_DIR)/activate_api_models/
-	rm -rf $(PYTHON_LIB_DIR)/src/
-	rm -rf $(PYTHON_LIB_DIR)/docs/
-	rm -rf $(PYTHON_LIB_DIR)/tests/
-	rm -rf $(PYTHON_LIB_DIR)/.openapi-generator/
-	rm -f $(PYTHON_LIB_DIR)/.openapi-generator-ignore
-	rm -f $(PYTHON_LIB_DIR)/.flake8
-	rm -f $(PYTHON_LIB_DIR)/openapi.yaml
-	rm -f $(PYTHON_LIB_DIR)/requirements.txt
-	rm -f $(PYTHON_LIB_DIR)/setup.cfg
-	rm -f $(PYTHON_LIB_DIR)/pyproject.toml
-	rm -f $(PYTHON_LIB_DIR)/Dockerfile
-	rm -f $(PYTHON_LIB_DIR)/docker-compose.yaml
+	@# Python library - remove entire directory (will be recreated by codegen)
+	rm -rf $(PYTHON_LIB_DIR)
 	@# TypeScript library - remove generated sources and OpenAPI artifacts
 	rm -rf $(TS_LIB_DIR)/src/
 	rm -rf $(TS_LIB_DIR)/docs/
