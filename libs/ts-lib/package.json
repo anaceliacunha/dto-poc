@@ -8,6 +8,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./demo": {
+      "types": "./dist/demo/index.d.ts",
+      "default": "./dist/demo/index.js"
+    },
+    "./demo/models": {
+      "types": "./dist/demo/models/index.d.ts",
+      "default": "./dist/demo/models/index.js"
+    },
+    "./demo/apis": {
+      "types": "./dist/demo/apis/index.d.ts",
+      "default": "./dist/demo/apis/index.js"
     }
   },
   "files": [

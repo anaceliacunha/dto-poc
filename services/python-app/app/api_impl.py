@@ -4,8 +4,8 @@ from typing import List, Optional
 
 from fastapi import HTTPException, status
 from kafka.errors import KafkaError
-from activate_api_models.apis.default_api_base import BaseDefaultApi
-from activate_api_models.models.demo_message import DemoMessage
+from activate_api_models.demo.apis.default_api_base import BaseDefaultApi
+from activate_api_models.demo.models.demo_message import DemoMessage
 
 from .kafka_bridge import KafkaBridge
 from .storage import MessageStore

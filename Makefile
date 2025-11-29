@@ -69,9 +69,9 @@ install-java-lib: build-java-lib
 
 install-python-lib:
 	@echo "Installing Python library..."
-	@if [ -f "libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl" ]; then \
+	@if [ -f "libs/python-lib/dist/activate_api_models*.whl" ]; then \
 		echo "Installing from local wheel..."; \
-		cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl; \
+		cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models*.whl; \
 	else \
 		echo "Installing from PyPI..."; \
 		cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --upgrade activate-api-models; \
