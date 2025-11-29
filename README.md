@@ -112,7 +112,9 @@ make clean-all      # Run both clean-codegen and clean-build
 
 **Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
 
-## Kafka infrastructure
+## Demo
+
+### Kafka infrastructure
 
 ```bash
 make kafka-up    # podman-compose up -d (infra/docker-compose.yml, service names: zookeeper, kafka)
@@ -120,7 +122,7 @@ make topics      # infra/scripts/create-topics.sh → podman-compose exec kafka 
 make kafka-down  # podman-compose down
 ```
 
-## Run the services
+### Run the services
 
 ```bash
 make run-java      # Spring Boot on :8080 (uses activate-api-models JAR from Maven repo)
@@ -141,22 +143,22 @@ Each POST call pushes to Kafka (`demo.from.java` or `demo.from.python`) and stor
 * Messages submitted to the Python REST controller
 * Messages consumed from Java via Kafka
 
-## Manual REST smoke tests
+### Manual REST smoke tests
 
 ```bash
-curl -X POST http://localhost:8080/messages/java \
+curl -X POST http://localhost:8080/demo/messages/java \
   -H 'Content-Type: application/json' \
-  -d @openapi/<domain>/samples/precision-roundtrip-sample.json
+  -d @openapi/demo/samples/precision-roundtrip-sample.json
 
-curl -X POST http://localhost:8000/messages/python \
+curl -X POST http://localhost:8000/demo/messages/python \
   -H 'Content-Type: application/json' \
-  -d @openapi/<domain>/samples/precision-roundtrip-sample.json
+  -d @openapi/demo/samples/precision-roundtrip-sample.json
 
-curl http://localhost:8080/messages/java/from-python | jq
-curl http://localhost:8000/messages/python/from-java | jq
+curl http://localhost:8080/demo/messages/java/from-python | jq
+curl http://localhost:8000/demo/messages/python/from-java | jq
 ```
 
-## Workflow
+### Workflow
 
 1. `make kafka-up && make topics`
 2. `make install` (runs clean-all, codegen, build-libs, install-libs - use this for first time setup or after spec changes)
@@ -164,7 +166,7 @@ curl http://localhost:8000/messages/python/from-java | jq
 4. `make run-python` (port 8000)
 5. `make run-web` (port 5173) → use the UI to post payloads to either service and observe the cross-language Kafka flow.
 
-## Swagger / OpenAPI UI
+### Swagger / OpenAPI UI
 
 The Spring Boot service bundles SpringDoc. Once `make run-java` is up you can explore and exercise every REST endpoint via Swagger UI at:
 
