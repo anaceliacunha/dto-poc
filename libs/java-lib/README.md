@@ -6,12 +6,12 @@ This library contains auto-generated DTO models and API classes for Java applica
 
 ```
 src/main/java/com/activate/
-└── demo/
-    ├── models/         # Generated model classes (DemoMessage, Item, etc.)
-    └── apis/           # Generated API interfaces (DefaultApi, ApiUtil, etc.)
+└── <domain>/           # Domain-specific package (e.g., demo, assortment, promo)
+    ├── models/         # Generated model classes
+    └── apis/           # Generated API interfaces
 ```
 
-Additional domains (e.g., assortment, promo) will be organized similarly under `com.activate.{domain}/`.
+All domains follow the same structure under `com.activate.<domain>/`.
 
 ## Installation
 
@@ -32,12 +32,11 @@ Add the dependency to your `pom.xml`:
 </dependency>
 ```
 
-Then use the models and APIs:
+Then import and use the models and APIs for your domain:
 
 ```java
-import com.activate.demo.models.DemoMessage;
-import com.activate.demo.models.Item;
-import com.activate.demo.apis.DefaultApi;
+import com.activate.<domain>.models.*;
+import com.activate.<domain>.apis.*;
 
 // Use the models and API
 ```
@@ -56,8 +55,8 @@ The JAR will be installed to your local Maven repository (`~/.m2/repository/com/
 
 Code is generated directly from OpenAPI specs using:
 ```bash
-make codegen-java-models  # Generates models in com.activate.models
-make codegen-java-api     # Generates APIs in com.activate.apis
+make codegen-<domain>-java-models  # Generates models in com.activate.<domain>.models
+make codegen-<domain>-java-api     # Generates APIs in com.activate.<domain>.apis
 ```
 
 No manual copying or build helper plugins are required. Maven compiles the generated code directly from `src/main/java/`.

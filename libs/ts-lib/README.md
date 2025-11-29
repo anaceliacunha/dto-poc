@@ -6,9 +6,9 @@ This package contains auto-generated DTO models and API clients for TypeScript a
 
 ```
 src/
-├── demo/           # Demo domain
-│   ├── models/     # Generated model classes (DemoMessage, Item, etc.)
-│   ├── apis/       # Generated API classes (DefaultApi, etc.)
+├── <domain>/       # Domain-specific directory (e.g., demo, assortment, promo)
+│   ├── models/     # Generated model classes
+│   ├── apis/       # Generated API classes
 │   ├── runtime.ts  # Runtime utilities
 │   └── index.ts    # Domain exports
 └── index.ts        # Re-exports from all domains
@@ -31,14 +31,14 @@ npm install @activate/api-models
 ## Usage
 
 ```typescript
-import { DemoMessage, Item } from '@activate/api-models/demo/models';
-import { DefaultApi } from '@activate/api-models/demo/apis';
-import { Configuration } from '@activate/api-models/demo';
+import { ModelName } from '@activate/api-models/<domain>/models';
+import { DefaultApi } from '@activate/api-models/<domain>/apis';
+import { Configuration } from '@activate/api-models/<domain>';
 
 // Use the models and API
 const config = new Configuration({ basePath: 'http://localhost:8080' });
 const api = new DefaultApi(config);
-const message: DemoMessage = { /* ... */ };
+const model: ModelName = { /* ... */ };
 ```
 
 ## Build
@@ -56,8 +56,8 @@ The compiled JavaScript and TypeScript definitions will be in the `dist/` direct
 
 Code is generated directly from OpenAPI specs using:
 ```bash
-make codegen-demo-ts-models    # Generates models in src/demo/models/
-make codegen-demo-react-api    # Generates API client in src/demo/apis/ (typescript-fetch generator)
+make codegen-<domain>-ts-models  # Generates models in src/<domain>/models/
+make codegen-<domain>-react-api  # Generates API client in src/<domain>/apis/ (typescript-fetch generator)
 ```
 
 No manual copying or post-processing is required. The build process compiles TypeScript directly from `src/`.
