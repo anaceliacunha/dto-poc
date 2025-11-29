@@ -4,7 +4,7 @@ import demo.app.service.MessageService;
 import com.activate.demo.models.DemoMessage;
 import java.util.List;
 import javax.validation.Valid;
-import com.activate.demo.apis.MessagesApiController;
+import com.activate.demo.apis.DemoApiController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +13,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 
 @RestController
 @CrossOrigin(origins = "*")
-public class LocalMessagesApiController extends MessagesApiController {
+public class LocalMessagesApiController extends DemoApiController {
 
   private final MessageService messageService;
 

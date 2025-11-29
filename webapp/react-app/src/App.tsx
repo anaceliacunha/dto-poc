@@ -657,7 +657,7 @@ const App = () => {
                     <ResponseSection
                         title="Java REST storage"
                         items={responses.java}
-                        description="What the Spring Boot service stored locally when you POST to /messages/java."
+                        description="What the Spring Boot service stored locally when you POST to /demo/messages/java."
                     />
                     <ResponseSection
                         title="From Python → Java"

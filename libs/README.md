@@ -78,7 +78,7 @@ mvn clean install
 - GroupId: `com.activate`
 - ArtifactId: `activate-api-models`
 - Version: `1.0.0-SNAPSHOT`
-- Packages: `com.activate.demo.models`, `com.activate.demo.apis` (and others as domains are added)
+- Packages: `com.activate.<domain>.models`, `com.activate.<domain>.apis` (e.g., demo, assortment, promo)
 
 ### Python Library (`python-lib`)
 
@@ -102,7 +102,7 @@ python -m twine upload dist/*
 ```
 
 **Package name:** `activate-api-models` (imports as `activate_api_models`)
-**Modules:** `activate_api_models.demo.models`, `activate_api_models.demo.apis` (and others as domains are added)
+**Modules:** `activate_api_models.<domain>.models`, `activate_api_models.<domain>.apis` (e.g., demo, assortment, promo)
 
 **Registry:** PyPI or private PyPI server (optional)
 
@@ -140,11 +140,11 @@ npm publish
 ### 1. Generate Code
 
 ```bash
-make codegen        # Generate all domains (currently: demo)
-make codegen-demo   # Generate only demo domain
+make codegen           # Generate all domains (e.g., demo, assortment, promo)
+make codegen-<domain>  # Generate only a specific domain
 ```
 
-This generates all code directly into the library directories from OpenAPI specs in `openapi/*/`.
+This generates all code directly into the library directories from OpenAPI specs in `openapi/<domain>/`.
 
 ### 2. Build Libraries
 

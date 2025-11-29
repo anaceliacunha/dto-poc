@@ -9,7 +9,7 @@ servers:
   - url: http://localhost:8000
     description: Python FastAPI service
 paths:
-  /messages/java:
+  /demo/messages/java:
     get:
       summary: List messages seen by Java
       operationId: listJavaMessages
@@ -34,7 +34,7 @@ paths:
       responses:
         '202':
           description: Message accepted and forwarded to Kafka
-  /messages/java/from-python:
+  /demo/messages/java/from-python:
     get:
       summary: Messages originally emitted by Python
       operationId: listMessagesFromPython
@@ -47,7 +47,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DemoMessage'
-  /messages/python:
+  /demo/messages/python:
     get:
       summary: List messages seen by Python
       operationId: listPythonMessages
@@ -72,7 +72,7 @@ paths:
       responses:
         '202':
           description: Message accepted and forwarded to Kafka
-  /messages/python/from-java:
+  /demo/messages/python/from-java:
     get:
       summary: Messages produced by Java service
       operationId: listMessagesFromJava

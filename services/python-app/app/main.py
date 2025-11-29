@@ -65,7 +65,7 @@ default_api_router.routes = [
     for route in default_api_router.routes
     if not (
         isinstance(route, APIRoute)
-        and route.path == "/messages/python"
+        and route.path == "/demo/messages/python"
         and "POST" in route.methods
     )
 ]
@@ -81,7 +81,7 @@ app.add_middleware(
 app.include_router(default_api_router)
 
 
-@app.post("/messages/python", status_code=202, response_model=shared_demo_module.DemoMessage)
+@app.post("/demo/messages/python", status_code=202, response_model=shared_demo_module.DemoMessage)
 async def publish_python_override(message: shared_demo_module.DemoMessage) -> shared_demo_module.DemoMessage:
     handler = BaseDefaultApi.subclasses[0]()
     await handler.publish_python_message(message)
