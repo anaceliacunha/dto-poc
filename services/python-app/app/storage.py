@@ -4,7 +4,7 @@ from collections import deque
 from threading import Lock
 from typing import Deque, List
 
-from activate_api_models.models.demo_message import DemoMessage
+from activate_api_models.demo.models.demo_message import DemoMessage
 
 
 class MessageStore:

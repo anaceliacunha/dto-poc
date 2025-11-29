@@ -1,6 +1,6 @@
 package demo.app.storage;
 
-import com.activate.models.DemoMessage;
+import com.activate.demo.models.DemoMessage;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;

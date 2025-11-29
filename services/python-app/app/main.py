@@ -11,11 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
 from kafka.errors import KafkaError
 from pydantic import BaseModel
-import activate_api_models.models as shared_models
-import activate_api_models.models.demo_message as shared_demo_module
+import activate_api_models.demo.models as shared_models
+import activate_api_models.demo.models.demo_message as shared_demo_module
 
 # Wire generated API package to reuse shared DTOs
-extra_models_module = types.ModuleType("activate_api_models.models.extra_models")
+extra_models_module = types.ModuleType("activate_api_models.demo.models.extra_models")
 
 
 class _TokenModel(BaseModel):
@@ -23,15 +23,15 @@ class _TokenModel(BaseModel):
 
 
 extra_models_module.TokenModel = _TokenModel
-sys.modules["activate_api_models.models.extra_models"] = extra_models_module
+sys.modules["activate_api_models.demo.models.extra_models"] = extra_models_module
 
 # Make sure the API can find the models
-sys.modules["activate_api_models.models"] = shared_models
-sys.modules["activate_api_models.models.demo_message"] = shared_demo_module
+sys.modules["activate_api_models.demo.models"] = shared_models
+sys.modules["activate_api_models.demo.models.demo_message"] = shared_demo_module
 
-from activate_api_models.apis import default_api  # noqa: E402
-from activate_api_models.apis.default_api import router as default_api_router  # noqa: E402
-from activate_api_models.apis.default_api_base import BaseDefaultApi  # noqa: E402
+from activate_api_models.demo.apis import default_api  # noqa: E402
+from activate_api_models.demo.apis.default_api import router as default_api_router  # noqa: E402
+from activate_api_models.demo.apis.default_api_base import BaseDefaultApi  # noqa: E402
 
 from .api_impl import configure_default_api  # noqa: E402
 from .config import get_settings

@@ -14,18 +14,19 @@ dto-poc/
 │  └─ demo.mk                    ← Demo domain codegen targets
 ├─ libs/                         ← Packaged libraries (OpenAPI generates directly here)
 │  ├─ java-lib/                  ← Maven project with generated code
-│  │  └─ src/main/java/com/activate/
+│  │  └─ src/main/java/com/activate/demo/
 │  │     ├─ apis/                ← Generated API classes
 │  │     └─ models/              ← Generated model classes
 │  ├─ python-lib/                ← Python package with generated code
-│  │  └─ src/activate_api_models/
+│  │  └─ src/activate_api_models/demo/
 │  │     ├─ apis/                ← Generated API classes
 │  │     └─ models/              ← Generated model classes
 │  └─ ts-lib/                    ← NPM package with generated code
-│     └─ src/
+│     └─ src/demo/
 │        ├─ apis/                ← Generated API classes
 │        ├─ models/              ← Generated model classes
-│        └─ api/                 ← React API client
+│        ├─ runtime.ts           ← Runtime utilities
+│        └─ index.ts             ← Domain exports
 ├─ services/
 │  ├─ java-app/      ← Spring Boot REST + Kafka (uses activate-api-models JAR)
 │  └─ python-app/    ← FastAPI REST + Kafka (uses activate-api-models wheel)
@@ -51,12 +52,12 @@ make codegen-demo                # generate all demo code (Java/Python/TS models
 make codegen-demo-java           # generate demo Java code (models + API)
 make codegen-demo-python         # generate demo Python code (models + API)
 make codegen-demo-ts             # generate demo TypeScript code (models + API)
-make codegen-demo-java-models    # regenerate Java models in libs/java-lib/src/main/java/com/activate/models/
-make codegen-demo-java-api       # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/apis/
-make codegen-demo-python-models  # regenerate Python models in libs/python-lib/src/activate_api_models/models/
-make codegen-demo-python-api     # regenerate FastAPI in libs/python-lib/src/activate_api_models/apis/
-make codegen-demo-ts-models      # regenerate TypeScript models in libs/ts-lib/src/models/
-make codegen-demo-react-api      # regenerate React API client in libs/ts-lib/src/apis/
+make codegen-demo-java-models    # regenerate Java models in libs/java-lib/src/main/java/com/activate/demo/models/
+make codegen-demo-java-api       # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/demo/apis/
+make codegen-demo-python-models  # regenerate Python models in libs/python-lib/src/activate_api_models/demo/models/
+make codegen-demo-python-api     # regenerate FastAPI in libs/python-lib/src/activate_api_models/demo/apis/
+make codegen-demo-ts-models      # regenerate TypeScript models in libs/ts-lib/src/demo/models/
+make codegen-demo-react-api      # regenerate React API client in libs/ts-lib/src/demo/apis/
 ```
 
 **Adding new domains:** Create a new makefile (e.g., `makefiles/assortment.mk`) with domain-specific targets, then add `include makefiles/assortment.mk` to the main `Makefile` and update the `codegen` target to include `codegen-assortment`.
@@ -65,12 +66,12 @@ Generated code locations:
 
 | Language | Package | Directory |
 | --- | --- | --- |
-| Java | com.activate.models | `libs/java-lib/src/main/java/com/activate/models/` |
-| Java | com.activate.apis | `libs/java-lib/src/main/java/com/activate/apis/` |
-| Python | activate_api_models.models | `libs/python-lib/src/activate_api_models/models/` |
-| Python | activate_api_models.apis | `libs/python-lib/src/activate_api_models/apis/` |
-| TypeScript | @activate/api-models | `libs/ts-lib/src/models/` |
-| TypeScript | @activate/api-models/api | `libs/ts-lib/src/api/` |
+| Java | com.activate.demo.models | `libs/java-lib/src/main/java/com/activate/demo/models/` |
+| Java | com.activate.demo.apis | `libs/java-lib/src/main/java/com/activate/demo/apis/` |
+| Python | activate_api_models.demo.models | `libs/python-lib/src/activate_api_models/demo/models/` |
+| Python | activate_api_models.demo.apis | `libs/python-lib/src/activate_api_models/demo/apis/` |
+| TypeScript | @activate/api-models/demo/models | `libs/ts-lib/src/demo/models/` |
+| TypeScript | @activate/api-models/demo/apis | `libs/ts-lib/src/demo/apis/` |
 
 **How services consume the DTOs:**
 - **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`)
@@ -110,16 +111,6 @@ make clean-all      # Run both clean-codegen and clean-build
 ```
 
 **Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
-
-## Installing service dependencies
-
-Install service deps once:
-
-```bash
-cd services/java-app && mvn dependency:go-offline
-cd services/python-app && python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-cd webapp/react-app && npm install
-```
 
 ## Kafka infrastructure
 

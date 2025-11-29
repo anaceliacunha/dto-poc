@@ -1,10 +1,10 @@
 package demo.app.controller;
 
 import demo.app.service.MessageService;
-import com.activate.models.DemoMessage;
+import com.activate.demo.models.DemoMessage;
 import java.util.List;
 import javax.validation.Valid;
-import com.activate.apis.MessagesApiController;
+import com.activate.demo.apis.MessagesApiController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;

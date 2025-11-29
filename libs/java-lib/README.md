@@ -6,9 +6,12 @@ This library contains auto-generated DTO models and API classes for Java applica
 
 ```
 src/main/java/com/activate/
-├── models/         # Generated model classes (DemoMessage, Item, etc.)
-└── apis/           # Generated API interfaces (DefaultApi, ApiUtil, etc.)
+└── demo/
+    ├── models/         # Generated model classes (DemoMessage, Item, etc.)
+    └── apis/           # Generated API interfaces (DefaultApi, ApiUtil, etc.)
 ```
+
+Additional domains (e.g., assortment, promo) will be organized similarly under `com.activate.{domain}/`.
 
 ## Installation
 
@@ -32,16 +35,16 @@ Add the dependency to your `pom.xml`:
 Then use the models and APIs:
 
 ```java
-import com.activate.models.DemoMessage;
-import com.activate.models.Item;
-import com.activate.apis.DefaultApi;
+import com.activate.demo.models.DemoMessage;
+import com.activate.demo.models.Item;
+import com.activate.demo.apis.DefaultApi;
 
 // Use the models and API
 ```
 
 ## Build
 
-The OpenAPI generator writes code directly into `src/main/java/com/activate/`. To build the JAR:
+The OpenAPI generator writes code directly into `src/main/java/com/activate/{domain}/`. To build the JAR:
 
 ```bash
 mvn clean install
