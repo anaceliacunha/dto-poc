@@ -47,7 +47,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DemoMessage'
-  /demo/messages/python:thon:
+  /demo/messages/python:
     get:
       summary: List messages seen by Python
       operationId: listPythonMessages
