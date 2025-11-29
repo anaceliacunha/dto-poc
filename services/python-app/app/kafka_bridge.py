@@ -7,7 +7,7 @@ from typing import Optional
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 import logging
-from activate_api_models.models.demo_message import DemoMessage
+from activate_api_models.demo.models.demo_message import DemoMessage
 
 from .config import Settings
 from .storage import MessageStore

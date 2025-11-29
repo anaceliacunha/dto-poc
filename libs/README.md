@@ -4,12 +4,12 @@ This directory contains the generated OpenAPI code and packaging configurations 
 
 ## Overview
 
-OpenAPI generators write code directly into these library directories:
+OpenAPI generators write code directly into these library directories from domain-specific specs in `openapi/*/`:
 - `libs/java-lib/src/main/java/com/activate/` - Java models and APIs
 - `libs/python-lib/src/activate_api_models/` - Python models and APIs  
 - `libs/ts-lib/src/` - TypeScript models and APIs
 
-The build process compiles/packages this generated code without any intermediate copying steps.
+The build process compiles/packages this generated code without any intermediate copying steps. All domains (e.g., demo, assortment) contribute to the same shared library packages.
 
 ## Directory Structure
 
@@ -78,7 +78,7 @@ mvn clean install
 - GroupId: `com.activate`
 - ArtifactId: `activate-api-models`
 - Version: `1.0.0-SNAPSHOT`
-- Packages: `com.activate.models`, `com.activate.apis`
+- Packages: `com.activate.demo.models`, `com.activate.demo.apis` (and others as domains are added)
 
 ### Python Library (`python-lib`)
 
@@ -96,7 +96,7 @@ python -m build
 ```
 
 **Package name:** `activate-api-models` (imports as `activate_api_models`)
-**Modules:** `activate_api_models.models`, `activate_api_models.apis`
+**Modules:** `activate_api_models.demo.models`, `activate_api_models.demo.apis` (and others as domains are added)
 
 ### TypeScript/React Library (`ts-lib`)
 
@@ -123,10 +123,11 @@ npm run build
 ### 1. Generate Code
 
 ```bash
-make codegen
+make codegen        # Generate all domains (currently: demo)
+make codegen-demo   # Generate only demo domain
 ```
 
-This generates all code directly into the library directories from OpenAPI specs.
+This generates all code directly into the library directories from OpenAPI specs in `openapi/*/`.
 
 ### 2. Build Libraries
 

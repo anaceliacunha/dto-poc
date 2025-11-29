@@ -67,7 +67,7 @@ install-java-lib: build-java-lib
 	@echo "Java library installed to local Maven repository (~/.m2/repository)"
 
 install-python-lib: build-python-lib
-	cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+	cd $(PYTHON_SERVICE_DIR) && .venv/bin/pip install --force-reinstall ../../libs/python-lib/dist/activate_api_models*.whl
 
 install-ts-lib: build-ts-lib
 	cd $(WEBAPP_DIR) && npm install ../../libs/ts-lib

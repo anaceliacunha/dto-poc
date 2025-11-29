@@ -2,7 +2,7 @@ package demo.app.service;
 
 import demo.app.config.KafkaTopicProperties;
 import demo.app.storage.InMemoryMessageStore;
-import com.activate.models.DemoMessage;
+import com.activate.demo.models.DemoMessage;
 import java.util.List;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
