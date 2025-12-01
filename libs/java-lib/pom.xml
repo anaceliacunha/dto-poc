@@ -71,11 +71,7 @@
         </dependency>
         
         <!-- JSR305 for annotations -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
-        </dependency>
+
         
         <!-- Javax annotation -->
         <dependency>

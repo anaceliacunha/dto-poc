@@ -2,22 +2,10 @@ import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import './styles.css';
-import type { DemoMessage as GeneratedDemoMessage } from '@activate/api-models/demo/models';
+import type { DemoMessage } from '@activate/api-models/demo/models';
 import { DemoMessageCategoryEnum, Item } from '@activate/api-models/demo/models';
 import { DefaultApi } from '@activate/api-models/demo/apis';
 import { Configuration } from '@activate/api-models/demo';
-
-type DemoMessage = Omit<
-    GeneratedDemoMessage,
-    '_class' | 'displayName' | 'withSpace' | 'snakeCase' | 'createdAt' | 'dateOnly'
-> & {
-    createdAt: string;
-    dateOnly: string;
-    class?: string | null;
-    'display-name'?: string | null;
-    'with space'?: string | null;
-    snake_case?: string;
-};
 
 type Category = DemoMessageCategoryEnum;
 
@@ -128,45 +116,19 @@ const downloadBinaryData = (value: string, filename = 'binaryData.bin') => {
     URL.revokeObjectURL(url);
 };
 
-const mapGeneratedToLocal = (message: GeneratedDemoMessage): DemoMessage => {
-    const { _class, display_name, with_space, snake_case, createdAt, dateOnly, ...rest } = message;
+const formatDemoMessage = (message: DemoMessage): DemoMessage => {
     return {
-        ...rest,
-        createdAt: createdAt?.toISOString() ?? new Date().toISOString(),
-        dateOnly:
-            dateOnly instanceof Date
-                ? dayjs(dateOnly).format('YYYY-MM-DD')
-                : dateOnly
-                    ? String(dateOnly)
-                    : '',
-        class: _class ?? null,
-        'display-name': display_name ?? null,
-        'with space': with_space ?? null,
-        snake_case: snake_case ?? ''
+        ...message,
+        createdAt: typeof message.createdAt === 'string' 
+            ? message.createdAt 
+            : new Date().toISOString(),
+        dateOnly: message.dateOnly 
+            ? (typeof message.dateOnly === 'string' ? message.dateOnly : dayjs(message.dateOnly).format('YYYY-MM-DD'))
+            : ''
     };
 };
 
-const mapLocalToGenerated = (message: DemoMessage): GeneratedDemoMessage => {
-    const {
-        class: classValue,
-        'display-name': displayName,
-        'with space': withSpace,
-        snake_case,
-        createdAt,
-        dateOnly,
-        ...rest
-    } = message;
 
-    return {
-        ...(rest as GeneratedDemoMessage),
-        createdAt: parseDateOrNow(createdAt),
-        dateOnly: parseDate(dateOnly) ?? undefined,
-        _class: classValue ?? undefined,
-        display_name: displayName ?? undefined,
-        with_space: withSpace ?? undefined,
-        snake_case: snake_case ?? undefined
-    };
-};
 
 const formatApiError = async (error: unknown): Promise<string> => {
     if (error instanceof Response) {
@@ -263,7 +225,7 @@ const App = () => {
             id: Number(form.id) || 0,
             text: form.text,
             createdAt: form.createdAt || dayjs().toISOString(),
-            dateOnly: form.dateOnly === '' ? '' : form.dateOnly,
+            dateOnly: form.dateOnly === '' ? undefined : form.dateOnly,
             active:
                 form.active === 'null' ? null : form.active === 'true',
             price: form.price === '' ? undefined : Number(form.price),
@@ -272,13 +234,12 @@ const App = () => {
             category: form.category,
             meta: buildMeta(),
             items: buildItems(),
-            // @ts-ignore
             binaryData: binaryNull ? undefined : form.binaryData,
             binaryDataFilename: binaryNull || !form.binaryDataFilename ? undefined : form.binaryDataFilename,
-            class: form.classValue,
-            'display-name': form.displayName,
-            'with space': form.withSpace,
-            snake_case: form.snake_case,
+            _class: form.classValue,
+            displayName: form.displayName,
+            withSpace: form.withSpace,
+            snakeCase: form.snake_case,
             camelCase: form.camelCase
         };
         return payload;
@@ -322,9 +283,9 @@ const App = () => {
         try {
             setStatus(`Sending payload to ${target} service...`);
             if (target === 'java') {
-                await javaApi.publishJavaMessage({ demoMessage: mapLocalToGenerated(payload) });
+                await javaApi.publishJavaMessage({ demoMessage: payload });
             } else {
-                await pythonApi.publishPythonMessage({ demoMessage: mapLocalToGenerated(payload) });
+                await pythonApi.publishPythonMessage({ demoMessage: payload });
             }
             setStatus(`Accepted by ${target} service.`);
             await refreshAll();
@@ -343,10 +304,10 @@ const App = () => {
                 pythonApi.listMessagesFromJava()
             ]);
             setResponses({
-                java: java.map(mapGeneratedToLocal),
-                javaFromPython: javaFromPython.map(mapGeneratedToLocal),
-                python: python.map(mapGeneratedToLocal),
-                pythonFromJava: pythonFromJava.map(mapGeneratedToLocal)
+                java: java.map(formatDemoMessage),
+                javaFromPython: javaFromPython.map(formatDemoMessage),
+                python: python.map(formatDemoMessage),
+                pythonFromJava: pythonFromJava.map(formatDemoMessage)
             });
             setStatus('Payload caches refreshed.');
         } catch (error) {
@@ -749,8 +710,10 @@ const MessageCard = ({ message }: { message: DemoMessage }) => {
                 <ValueBadge value={message.meta?.tags} label="meta.tags" />
                 <ValueBadge value={message.items} label="items" />
                 <ValueBadge value={message.binaryData} label="binary" />
-                <ValueBadge value={message['display-name']} label="display-name" />
-                <ValueBadge value={message['with space']} label="with space" />
+                <ValueBadge value={message.displayName} label="displayName" />
+                <ValueBadge value={message.withSpace} label="withSpace" />
+                <ValueBadge value={message.snakeCase} label="snakeCase" />
+                <ValueBadge value={message.camelCase} label="camelCase" />
             </div>
             {hasBinaryData && (
                 <div className="actions" style={{ marginTop: '0.5rem' }}>

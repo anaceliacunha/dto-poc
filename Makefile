@@ -24,8 +24,10 @@ clean-codegen:
 	rm -rf $(JAVA_LIB_DIR)/docs/
 	rm -rf $(JAVA_LIB_DIR)/.openapi-generator/
 	rm -f $(JAVA_LIB_DIR)/.openapi-generator-ignore
-	@# Python library - remove entire directory (will be recreated by codegen)
-	rm -rf $(PYTHON_LIB_DIR)
+	@# Python library - remove generated files but preserve README.md
+	@if [ -d $(PYTHON_LIB_DIR) ]; then \
+		find $(PYTHON_LIB_DIR) -mindepth 1 ! -name 'README.md' -delete; \
+	fi
 	@# TypeScript library - remove generated sources and OpenAPI artifacts
 	rm -rf $(TS_LIB_DIR)/src/
 	rm -rf $(TS_LIB_DIR)/docs/

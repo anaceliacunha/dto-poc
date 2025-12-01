@@ -61,6 +61,18 @@ make codegen-<domain>-java-api     # Generates APIs in com.activate.<domain>.api
 
 No manual copying or build helper plugins are required. Maven compiles the generated code directly from `src/main/java/`.
 
+## Generated vs Custom Code
+
+- **Generated (will be overwritten):**
+  - `src/main/java/com/activate/<domain>/models/` - Model DTOs
+  - `src/main/java/com/activate/<domain>/apis/` - API interfaces and controllers
+  - `src/main/java/org/openapitools/` - OpenAPI utilities
+  - `docs/` - API documentation
+
+- **Custom (preserved):**
+  - This `README.md` file
+  - `pom.xml` - Maven configuration
+
 ## Dependencies
 
 This library includes all necessary dependencies for the generated code:
@@ -68,3 +80,5 @@ This library includes all necessary dependencies for the generated code:
 - Spring Framework (for API interfaces)
 - Swagger/OpenAPI annotations
 - Validation API
+
+See `pom.xml` for the complete dependency list.

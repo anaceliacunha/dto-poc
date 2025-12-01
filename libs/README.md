@@ -9,7 +9,9 @@ OpenAPI generators write code directly into these library directories from domai
 - `libs/python-lib/src/activate_api_models/` - Python models and APIs  
 - `libs/ts-lib/src/` - TypeScript models and APIs
 
-The build process compiles/packages this generated code without any intermediate copying steps. All domains (e.g., demo, assortment) contribute to the same shared library packages.
+The build process compiles/packages this generated code without any intermediate copying steps. All domains (e.g., demo, assortment, promo) contribute to the same shared library packages.
+
+> 📖 **For detailed usage examples** of how to consume these libraries in Java, Python, and React applications (including Artifactory configuration), see the "Using the Libraries in Your Applications" section in the main [README.md](../README.md).
 
 ## Directory Structure
 
@@ -20,6 +22,11 @@ libs/
 └── ts-lib/         # NPM package for TypeScript/React distribution
 ```
 
+**Library-specific documentation:**
+- [java-lib/README.md](java-lib/README.md) - Java library details, Maven configuration, and usage
+- [python-lib/README.md](python-lib/README.md) - Python library details, wheel packaging, and usage
+- [ts-lib/README.md](ts-lib/README.md) - TypeScript library details, NPM packaging, and usage
+
 ## Building Libraries
 
 ### Build All Libraries
@@ -29,9 +36,12 @@ make build-libs
 ```
 
 This will build all three library packages:
-- `libs/java-lib/target/activate-api-models-1.0.0-SNAPSHOT.jar`
-- `libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl`
-- `libs/ts-lib/dist/` (compiled TypeScript)
+- **Java JAR**: `libs/java-lib/target/activate-api-models-1.0.0-SNAPSHOT.jar`
+- **Python wheel**: `libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl`
+- **TypeScript/NPM**: `libs/ts-lib/dist/` (compiled JavaScript + type definitions)
+  - Compiled `.js` files
+  - TypeScript declaration files (`.d.ts`)
+  - Source maps (`.js.map`)
 
 ### Build Individual Libraries
 
@@ -98,6 +108,8 @@ python -m build
 **Package name:** `activate-api-models` (imports as `activate_api_models`)
 **Modules:** `activate_api_models.<domain>.models`, `activate_api_models.<domain>.apis` (e.g., demo, assortment, promo)
 
+**Note:** The code generator creates domain-specific packages (e.g., `activate_api_models.demo`), but the build process patches `setup.cfg` to ensure the wheel name remains `activate_api_models` without domain suffixes. This allows a single wheel to contain models and APIs from all domains.
+
 ### TypeScript/React Library (`ts-lib`)
 
 **What it does:**
@@ -116,7 +128,12 @@ npm run build
 ```
 
 **Package name:** `@activate/api-models`
-**Exports:** Main export for models, `/api` export for API client
+**Exports:** Domain-specific paths for organized imports:
+- Models: `@activate/api-models/<domain>/models` (e.g., `@activate/api-models/demo/models`)
+- APIs: `@activate/api-models/<domain>/apis` (e.g., `@activate/api-models/demo/apis`)
+- Runtime utilities: `@activate/api-models/<domain>/runtime`
+
+**Property naming:** TypeScript models use `camelCase` for properties (e.g., `displayName`, `createdAt`) for idiomatic JavaScript/TypeScript usage, even if the OpenAPI schema uses different naming conventions.
 
 ## Workflow
 
@@ -136,22 +153,6 @@ make build-libs
 ```
 
 This compiles and packages the generated code into distributable libraries.
-
-### 3. Install Libraries
-
-```bash
-make install-libs
-```
-
-This installs the libraries to the consumer applications.
-
-### 4. Run Applications
-
-```bash
-make run-java     # Java service (uses JAR from Maven repo)
-make run-python   # Python service (uses installed wheel)
-make run-web      # React app (uses NPM package)
-```
 
 ## Version Management
 
@@ -178,21 +179,46 @@ Ensure the JAR is installed to your local Maven repository:
 make install-java-lib
 ```
 
+Verify installation:
+```bash
+ls ~/.m2/repository/com/activate/activate-api-models/1.0.0-SNAPSHOT/
+```
+
 ### Python: Module not found
 
-Ensure the wheel is installed in your virtual environment:
+Ensure the wheel is built and installed:
+```bash
+make build-python-lib
+make install-python-lib
+```
+
+Verify in Python:
 ```bash
 cd services/python-app
 source .venv/bin/activate
-pip install ../../libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl
+python -c "import activate_api_models.demo.models; print('OK')"
 ```
 
 ### TypeScript: Cannot find module
 
-Ensure the package is installed:
+Ensure the package is built and installed:
 ```bash
-cd webapp/react-app
-npm install
+make build-ts-lib
+make install-ts-lib
+```
+
+Verify the symlink:
+```bash
+ls -la webapp/react-app/node_modules/@activate/api-models
+```
+
+### Build fails after code regeneration
+
+If you regenerate code and encounter build errors:
+```bash
+make clean-build    # Clean build artifacts
+make build-libs     # Rebuild libraries
+make install-libs   # Reinstall to consumer apps
 ```
 
 ## Publishing (Future)

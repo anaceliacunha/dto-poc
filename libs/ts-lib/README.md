@@ -56,8 +56,21 @@ The compiled JavaScript and TypeScript definitions will be in the `dist/` direct
 
 Code is generated directly from OpenAPI specs using:
 ```bash
-make codegen-<domain>-ts-models  # Generates models in src/<domain>/models/
-make codegen-<domain>-react-api  # Generates API client in src/<domain>/apis/ (typescript-fetch generator)
+make codegen-<domain>-ts-models     # Generates models in src/<domain>/models/
+make codegen-<domain>-ts-fetch-api  # Generates API client in src/<domain>/apis/ (typescript-fetch generator)
 ```
 
 No manual copying or post-processing is required. The build process compiles TypeScript directly from `src/`.
+
+## Generated vs Custom Code
+
+- **Generated (will be overwritten):**
+  - `src/<domain>/models/` - TypeScript model interfaces
+  - `src/<domain>/apis/` - API client classes
+  - `src/<domain>/runtime.ts` - Runtime utilities
+  - `src/<domain>/index.ts` - Domain exports
+
+- **Custom (preserved):**
+  - This `README.md` file
+  - `package.json` - Package configuration
+  - `tsconfig.json` - TypeScript compiler configuration

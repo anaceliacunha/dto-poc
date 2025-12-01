@@ -1,4 +1,4 @@
-# Multi Language OpenAPI 3.1 Demo
+# Multi Language OpenAPI 3.1
 
 This workspace wires two OpenAPI 3.1 specs into React, Spring Boot 2.7 (Java 8 compatible), FastAPI, and Kafka. DTOs generated from *either* spec are forced into the same shared folders so that REST + Kafka traffic never drifts between languages.
 
@@ -44,34 +44,66 @@ dto-poc/
 
 The `Makefile` orchestrates code generation across multiple domains. Each domain has its own makefile in `makefiles/` (e.g., `demo.mk`) that defines language-specific targets. The main `Makefile` includes these modular files and provides top-level aggregation.
 
-Code generation applies explicit `--inline-schema-name-mappings` across every language target. This guarantees that anchors such as `DemoMessage` and `Item` never spawn `DemoMessage1`, `Item_1`, etc., keeping DTO names consistent in Java, Python, and TypeScript.
+### Key Design Decisions
+
+**Separation of Models and APIs:**
+- Models and APIs are generated separately from `<domain>-models.yaml` and `<domain>-api.yaml`
+- Models generation uses `--global-property models` to generate only model classes
+- API generation uses `--global-property apis` to generate only API interfaces/controllers
+- This separation enables:
+  - Independent versioning of data contracts vs API contracts
+  - Sharing models across multiple API specifications
+  - Cleaner generated code without unused artifacts
+
+**Consistent Naming:**
+- All generators apply explicit `--inline-schema-name-mappings` (e.g., `DemoMessage1=DemoMessage`, `DemoMessage1Items=Item`)
+- This guarantees that OpenAPI references never spawn numbered variants like `DemoMessage1`, `Item_1`, etc.
+- Keeps DTO names consistent across Java, Python, and TypeScript
+
+**Generator-Specific Configuration:**
+- **Java (spring)**: Uses Spring Boot 2.7 compatible settings (`useSpringBoot3=false`, `useJakartaEe=false`), Java 8 date library, Jackson serialization
+- **Python (python-fastapi)**: Generates FastAPI-compatible async endpoints with Pydantic models
+- **TypeScript (typescript-fetch)**: Generates Fetch API client with ES6+ features, `camelCase` property naming for idiomatic JavaScript/TypeScript usage
+
+### Available Targets
 
 ```bash
-make codegen                        # runs all domain generators (e.g., demo, assortment, promo)
-make codegen-<domain>               # generate all code for a specific domain (Java/Python/TS models + APIs)
-make codegen-<domain>-java          # generate domain Java code (models + API)
-make codegen-<domain>-python        # generate domain Python code (models + API)
-make codegen-<domain>-ts            # generate domain TypeScript code (models + API)
-make codegen-<domain>-java-models   # regenerate Java models in libs/java-lib/src/main/java/com/activate/<domain>/models/
-make codegen-<domain>-java-api      # regenerate Spring APIs in libs/java-lib/src/main/java/com/activate/<domain>/apis/
-make codegen-<domain>-python-models # regenerate Python models in libs/python-lib/src/activate_api_models/<domain>/models/
-make codegen-<domain>-python-api    # regenerate FastAPI in libs/python-lib/src/activate_api_models/<domain>/apis/
-make codegen-<domain>-ts-models     # regenerate TypeScript models in libs/ts-lib/src/<domain>/models/
-make codegen-<domain>-react-api     # regenerate React API client in libs/ts-lib/src/<domain>/apis/
+make codegen                          # runs all domain generators (e.g., demo, assortment, promo)
+make codegen-<domain>                 # generate all code for a specific domain (Java/Python/TS models + APIs)
+make codegen-<domain>-java            # generate domain Java code (models + API)
+make codegen-<domain>-python          # generate domain Python code (models + API)
+make codegen-<domain>-ts              # generate domain TypeScript code (models + API)
+make codegen-<domain>-java-models     # regenerate Java models only from <domain>-models.yaml
+make codegen-<domain>-java-api        # regenerate Spring APIs only from <domain>-api.yaml
+make codegen-<domain>-python-models   # regenerate Python models only from <domain>-models.yaml
+make codegen-<domain>-python-api      # regenerate FastAPI endpoints only from <domain>-api.yaml
+make codegen-<domain>-ts-models       # regenerate TypeScript models only from <domain>-models.yaml
+make codegen-<domain>-ts-fetch-api    # regenerate TypeScript Fetch API client from <domain>-api.yaml
 ```
 
-**Adding new domains:** Create a new makefile (e.g., `makefiles/<domain>.mk`) with domain-specific targets, then add `include makefiles/<domain>.mk` to the main `Makefile` and update the `codegen` target to include `codegen-<domain>`.
+**Adding new domains:** 
+1. Create OpenAPI specs: `openapi/<domain>/<domain>-models.yaml` and `openapi/<domain>/<domain>-api.yaml`
+2. Create a new makefile: `makefiles/<domain>.mk` with domain-specific targets following the pattern in `demo.mk`
+3. Add `include makefiles/<domain>.mk` to the main `Makefile`
+4. Update the `codegen` target to include `codegen-<domain>`
 
 Generated code locations:
 
-| Language | Package | Directory |
-| --- | --- | --- |
-| Java | com.activate.<domain>.models | `libs/java-lib/src/main/java/com/activate/<domain>/models/` |
-| Java | com.activate.<domain>.apis | `libs/java-lib/src/main/java/com/activate/<domain>/apis/` |
-| Python | activate_api_models.<domain>.models | `libs/python-lib/src/activate_api_models/<domain>/models/` |
-| Python | activate_api_models.<domain>.apis | `libs/python-lib/src/activate_api_models/<domain>/apis/` |
-| TypeScript | @activate/api-models/<domain>/models | `libs/ts-lib/src/<domain>/models/` |
-| TypeScript | @activate/api-models/<domain>/apis | `libs/ts-lib/src/<domain>/apis/` |
+| Language | Package                              | Directory |
+| --- |--------------------------------------| --- |
+| Java | com.activate.domain.models         | `libs/java-lib/src/main/java/com/activate/<domain>/models/` |
+| Java | com.activate.domain.apis           | `libs/java-lib/src/main/java/com/activate/<domain>/apis/` |
+| Python | activate_api_models.domain.models  | `libs/python-lib/src/activate_api_models/<domain>/models/` |
+| Python | activate_api_models.domain.apis    | `libs/python-lib/src/activate_api_models/<domain>/apis/` |
+| TypeScript | @activate/api-models/domain/models | `libs/ts-lib/src/<domain>/models/` |
+| TypeScript | @activate/api-models/domain/apis  | `libs/ts-lib/src/<domain>/apis/` |
+
+**Library Packaging:**
+
+For detailed information about building, packaging, and distributing the generated libraries, see [libs/README.md](libs/README.md). Individual library documentation:
+- [Java library (libs/java-lib/README.md)](libs/java-lib/README.md)
+- [Python library (libs/python-lib/README.md)](libs/python-lib/README.md)
+- [TypeScript library (libs/ts-lib/README.md)](libs/ts-lib/README.md)
 
 **How services consume the DTOs:**
 - **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`)
@@ -111,6 +143,45 @@ make clean-all      # Run both clean-codegen and clean-build
 ```
 
 **Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
+
+## Using the Libraries in Your Applications
+
+Once the libraries are published to your artifact repository (Maven Central/Artifactory, PyPI, or NPM registry), consuming applications can include them as standard dependencies.
+
+### Java Applications
+
+Add Maven dependency:
+
+```xml
+<!-- pom.xml -->
+<dependencies>
+    <dependency>
+        <groupId>com.activate</groupId>
+        <artifactId>activate-api-models</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+```
+
+### Python Applications
+
+Add to `requirements.txt`:
+
+```
+activate-api-models==1.0.0
+```
+
+### React/TypeScript Applications
+
+Add to `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@activate/api-models": "^1.0.0"
+  }
+}
+```
 
 ## Demo
 

@@ -39,9 +39,6 @@
   "peerDependencies": {
     "react": ">=16.8.0"
   },
-  "dependencies": {
-    "rxjs": "^7.8.0"
-  },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",

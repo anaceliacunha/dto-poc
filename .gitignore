@@ -7,8 +7,9 @@
 /libs/java-lib/.openapi-generator/
 /libs/java-lib/.openapi-generator-ignore
 
-# Python library - entire directory is generated
-/libs/python-lib/
+# Python library - generated content (README.md is preserved)
+/libs/python-lib/*
+!/libs/python-lib/README.md
 
 # TypeScript library - all generated content
 /libs/ts-lib/src/
