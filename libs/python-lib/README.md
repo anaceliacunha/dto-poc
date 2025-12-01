@@ -17,6 +17,14 @@ src/activate_api_models/
 
 All domains follow the same structure under `activate_api_models.<domain>/`.
 
+## Package Information
+
+- **Package name**: `activate-api-models` (imports as `activate_api_models`)
+- **Version**: `1.0.0`
+- **Modules**: `activate_api_models.<domain>.models`, `activate_api_models.<domain>.apis` (e.g., demo, assortment, promo)
+
+**Note:** The code generator creates domain-specific packages (e.g., `activate_api_models.demo`), but the build process patches `setup.cfg` to ensure the wheel name remains `activate_api_models` without domain suffixes. This allows a single wheel to contain models and APIs from all domains.
+
 ## Requirements
 
 Python >= 3.11
@@ -43,26 +51,44 @@ activate-api-models==1.0.0
 
 Then import and use the models and APIs for your domain:
 
+### Using Models
+
 ```python
-from activate_api_models.<domain>.models import (
-    DemoMessage,
-    DemoMessageCategoryEnum,
-    Item
-)
-from activate_api_models.<domain>.apis.default_api_base import BaseDefaultApi
+from activate_api_models.<domain>.models import ModelName, EnumName
 
-# Use Pydantic models
-message = DemoMessage(
+# Create and populate models
+model = ModelName(
     id=1,
-    text="Hello",
-    category=DemoMessageCategoryEnum.A
+    name="Example",
+    status=EnumName.VALUE
 )
 
-# Implement the API
+# Models support standard Pydantic features
+json_data = model.model_dump_json()
+restored = ModelName.model_validate_json(json_data)
+```
+
+### Implementing APIs (FastAPI)
+
+```python
+from activate_api_models.<domain>.apis.default_api_base import BaseDefaultApi
+from activate_api_models.<domain>.models import ModelName
+from typing import List
+
 class MyApiImplementation(BaseDefaultApi):
-    async def publish_message(self, message: DemoMessage) -> None:
-        # Your implementation here
+    async def create_model(self, model: ModelName) -> None:
+        # Your business logic here
         pass
+    
+    async def list_models(self) -> List[ModelName]:
+        # Return your data
+        return []
+
+# Register with FastAPI app
+from fastapi import FastAPI
+app = FastAPI()
+api_impl = MyApiImplementation()
+app.include_router(api_impl.router)
 ```
 
 ## Build

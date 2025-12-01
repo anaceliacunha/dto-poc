@@ -13,6 +13,13 @@ src/main/java/com/activate/
 
 All domains follow the same structure under `com.activate.<domain>/`.
 
+## Artifact Coordinates
+
+- **GroupId**: `com.activate`
+- **ArtifactId**: `activate-api-models`
+- **Version**: `1.0.0-SNAPSHOT`
+- **Packages**: `com.activate.<domain>.models`, `com.activate.<domain>.apis` (e.g., demo, assortment, promo)
+
 ## Installation
 
 This library is installed to your local Maven repository using:
@@ -37,8 +44,84 @@ Then import and use the models and APIs for your domain:
 ```java
 import com.activate.<domain>.models.*;
 import com.activate.<domain>.apis.*;
+```
 
-// Use the models and API
+### Using Models
+
+```java
+import com.activate.<domain>.models.ModelName;
+import com.activate.<domain>.models.EnumName;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+// Create and populate a model
+ModelName model = new ModelName();
+model.setId(1L);
+model.setName("Example");
+model.setStatus(EnumName.VALUE);
+
+// Models work with Jackson for JSON serialization
+ObjectMapper mapper = new ObjectMapper();
+String json = mapper.writeValueAsString(model);
+ModelName deserialized = mapper.readValue(json, ModelName.class);
+```
+
+### Implementing API Controllers (Spring Boot)
+
+The generated API classes provide controller stubs that you extend:
+
+```java
+import com.activate.<domain>.apis.YourApiController;
+import com.activate.<domain>.models.ModelName;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.NativeWebRequest;
+import javax.validation.Valid;
+import java.util.List;
+
+@RestController
+public class MyController extends YourApiController {
+
+    public MyController(NativeWebRequest nativeWebRequest) {
+        super(nativeWebRequest);
+    }
+
+    @Override
+    public ResponseEntity<Void> createModel(@Valid ModelName model) {
+        // Your business logic here
+        return ResponseEntity.accepted().build();
+    }
+
+    @Override
+    public ResponseEntity<List<ModelName>> listModels() {
+        // Your business logic here
+        return ResponseEntity.ok(yourDataSource.getAll());
+    }
+}
+```
+
+The generated controller base class includes:
+- Spring MVC annotations (`@RequestMapping`, `@PostMapping`, etc.)
+- Request/response type declarations
+- Validation annotations (`@Valid`)
+- Default `501 Not Implemented` responses for methods you haven't overridden
+
+### Validation
+
+Models include Bean Validation annotations based on OpenAPI constraints:
+
+```java
+import javax.validation.Valid;
+import javax.validation.constraints.*;
+
+// Generated models will have annotations like:
+// @NotNull, @Size(min=1, max=100), @Pattern(regexp="..."), etc.
+
+// Enable validation in Spring Boot
+@PostMapping
+public ResponseEntity<Void> create(@Valid @RequestBody ModelName model) {
+    // Spring automatically validates and returns 400 Bad Request if invalid
+    return ResponseEntity.ok().build();
+}
 ```
 
 ## Build

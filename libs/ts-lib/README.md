@@ -14,6 +14,15 @@ src/
 └── index.ts        # Re-exports from all domains
 ```
 
+## Package Information
+
+- **Package name**: `@activate/api-models`
+- **Version**: `1.0.0`
+- **Exports**: Domain-specific paths for organized imports:
+  - Models: `@activate/api-models/<domain>/models` (e.g., `@activate/api-models/demo/models`)
+  - APIs: `@activate/api-models/<domain>/apis` (e.g., `@activate/api-models/demo/apis`)
+  - Runtime utilities: `@activate/api-models/<domain>/runtime`
+
 ## Installation
 
 ### From local build
@@ -30,15 +39,62 @@ npm install @activate/api-models
 
 ## Usage
 
-```typescript
-import { ModelName } from '@activate/api-models/<domain>/models';
-import { DefaultApi } from '@activate/api-models/<domain>/apis';
-import { Configuration } from '@activate/api-models/<domain>';
+### Using Models
 
-// Use the models and API
-const config = new Configuration({ basePath: 'http://localhost:8080' });
-const api = new DefaultApi(config);
-const model: ModelName = { /* ... */ };
+```typescript
+import type { ModelName } from '@activate/api-models/<domain>/models';
+import { EnumName } from '@activate/api-models/<domain>/models';
+
+// Create type-safe model objects
+const model: ModelName = {
+    id: 1,
+    name: 'Example',
+    status: EnumName.VALUE,
+    createdAt: new Date().toISOString()
+};
+
+// Models use camelCase properties for idiomatic JavaScript/TypeScript
+```
+
+### Using the API Client
+
+```typescript
+import { DefaultApi, Configuration } from '@activate/api-models/<domain>/apis';
+import type { ModelName } from '@activate/api-models/<domain>/models';
+
+// Configure the client
+const api = new DefaultApi(
+    new Configuration({ basePath: 'http://localhost:8080' })
+);
+
+// Make API calls
+async function example() {
+    // POST request
+    await api.createModel({ modelName: model });
+    
+    // GET request
+    const results = await api.listModels();
+    return results;
+}
+```
+
+### React Integration
+
+```typescript
+import { useState, useEffect } from 'react';
+import { DefaultApi, Configuration } from '@activate/api-models/<domain>/apis';
+import type { ModelName } from '@activate/api-models/<domain>/models';
+
+function YourComponent() {
+    const [data, setData] = useState<ModelName[]>([]);
+    const api = new DefaultApi(new Configuration({ basePath: 'http://localhost:8080' }));
+    
+    useEffect(() => {
+        api.listModels().then(setData);
+    }, []);
+    
+    return <div>{/* Render your data */}</div>;
+}
 ```
 
 ## Build

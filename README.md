@@ -102,11 +102,28 @@ Generated code locations:
 
 For detailed information about building, packaging, and distributing the generated libraries, see [libs/README.md](libs/README.md).
 
-## Runtime prerequisites
+**Library Usage:**
 
-* Java 8+ (the project compiles with `maven-compiler-plugin` set to `1.8`)
-* Python 3.11 (adjust commands if your interpreter uses a different alias)
-* Node 18+
+For detailed information about using the generated libraries in your Java, Python, and React applications, see [README.md](../README.md).
+
+## Prerequisites
+
+### Development Tools
+
+* **openapi-generator CLI** (7.17.0 or newer) - Required for code generation
+  ```bash
+  brew install openapi-generator
+  # or
+  npm i -g @openapitools/openapi-generator-cli
+  ```
+
+### Runtime Requirements
+
+* **Java 8+** - The project compiles with `maven-compiler-plugin` set to `1.8`
+* **Python 3.11+** - Adjust commands if your interpreter uses a different alias
+* **Node 18+** - For TypeScript compilation and React development
+
+## Building Libraries
 
 After generating code, build and install the libraries:
 
@@ -132,54 +149,19 @@ make clean-all      # Run both clean-codegen and clean-build
 
 **Note:** The Python library directory (`libs/python-lib/`) is entirely generated and will be recreated by `make codegen`. The `clean-codegen` target removes it completely.
 
-## Using the Libraries in Your Applications
-
-Once the libraries are published to your artifact repository (Maven Central/Artifactory, PyPI, or NPM registry), consuming applications can include them as standard dependencies.
-
-### Java Applications
-
-Add Maven dependency:
-
-```xml
-<!-- pom.xml -->
-<dependencies>
-    <dependency>
-        <groupId>com.activate</groupId>
-        <artifactId>activate-api-models</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </dependency>
-</dependencies>
-```
-
-### Python Applications
-
-Add to `requirements.txt`:
-
-```
-activate-api-models==1.0.0
-```
-
-### React/TypeScript Applications
-
-Add to `package.json`:
-
-```json
-{
-  "dependencies": {
-    "@activate/api-models": "^1.0.0"
-  }
-}
-```
-
 ## Demo
 
-### Runtime prerequisites
+This section demonstrates the complete workflow with Kafka-based microservices communicating via generated DTOs.
 
-* Java 8+ (the project compiles with `maven-compiler-plugin` set to `1.8`)
-* Python 3.11 (adjust commands if your interpreter uses a different alias)
-* Node 18+
-* Podman + Podman Compose (`brew install podman podman-compose`; swap back to Docker Compose if you prefer Docker)
-* openapi-generator CLI (7.17.0 or newer) available on your PATH (`brew install openapi-generator` or `npm i -g @openapitools/openapi-generator-cli`) for the codegen targets
+### Demo Prerequisites
+
+In addition to the development tools and runtime requirements above:
+
+* **Podman + Podman Compose** - For running Kafka infrastructure
+  ```bash
+  brew install podman podman-compose
+  ```
+  *(Or use Docker Compose if you prefer Docker)*
 
 ### Kafka infrastructure
 

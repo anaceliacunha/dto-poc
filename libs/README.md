@@ -1,4 +1,4 @@
-# DTO Libraries
+# API & DTO Generated Libraries
 
 This directory contains the generated OpenAPI code and packaging configurations for distributing DTOs and APIs as reusable libraries.
 
@@ -10,8 +10,6 @@ OpenAPI generators write code directly into these library directories from domai
 - `libs/ts-lib/src/` - TypeScript models and APIs
 
 The build process compiles/packages this generated code without any intermediate copying steps. All domains (e.g., demo, assortment, promo) contribute to the same shared library packages.
-
-> 📖 **For detailed usage examples** of how to consume these libraries in Java, Python, and React applications (including Artifactory configuration), see the "Using the Libraries in Your Applications" section in the main [README.md](../README.md).
 
 ## Directory Structure
 
@@ -66,93 +64,6 @@ make install-java-lib    # Install to ~/.m2/repository
 make install-python-lib  # Install wheel to Python service
 make install-ts-lib      # Install NPM package to React app
 ```
-
-## Library Details
-
-### Java Library (`java-lib`)
-
-**What it does:**
-- Receives generated sources directly from OpenAPI generator
-- Packages into a single JAR with Maven
-- Installs to local Maven repository
-
-**Used by:** `services/java-app`
-
-**Build command:**
-```bash
-cd libs/java-lib
-mvn clean install
-```
-
-**Artifact:**
-- GroupId: `com.activate`
-- ArtifactId: `activate-api-models`
-- Version: `1.0.0-SNAPSHOT`
-- Packages: `com.activate.<domain>.models`, `com.activate.<domain>.apis` (e.g., demo, assortment, promo)
-
-### Python Library (`python-lib`)
-
-**What it does:**
-- Receives generated sources directly from OpenAPI generator
-- Packages into a Python wheel using standard setuptools
-- Combines models and API into a single `activate_api_models` package
-
-**Used by:** `services/python-app`
-
-**Build command:**
-```bash
-cd libs/python-lib
-python -m build
-```
-
-**Package name:** `activate-api-models` (imports as `activate_api_models`)
-**Modules:** `activate_api_models.<domain>.models`, `activate_api_models.<domain>.apis` (e.g., demo, assortment, promo)
-
-**Note:** The code generator creates domain-specific packages (e.g., `activate_api_models.demo`), but the build process patches `setup.cfg` to ensure the wheel name remains `activate_api_models` without domain suffixes. This allows a single wheel to contain models and APIs from all domains.
-
-### TypeScript/React Library (`ts-lib`)
-
-**What it does:**
-- Receives generated sources directly from OpenAPI generator
-- Compiles TypeScript to JavaScript
-- Generates type definitions
-- Creates an NPM package
-
-**Used by:** `webapp/react-app`
-
-**Build command:**
-```bash
-cd libs/ts-lib
-npm install
-npm run build
-```
-
-**Package name:** `@activate/api-models`
-**Exports:** Domain-specific paths for organized imports:
-- Models: `@activate/api-models/<domain>/models` (e.g., `@activate/api-models/demo/models`)
-- APIs: `@activate/api-models/<domain>/apis` (e.g., `@activate/api-models/demo/apis`)
-- Runtime utilities: `@activate/api-models/<domain>/runtime`
-
-**Property naming:** TypeScript models use `camelCase` for properties (e.g., `displayName`, `createdAt`) for idiomatic JavaScript/TypeScript usage, even if the OpenAPI schema uses different naming conventions.
-
-## Workflow
-
-### 1. Generate Code
-
-```bash
-make codegen           # Generate all domains (e.g., demo, assortment, promo)
-make codegen-<domain>  # Generate only a specific domain
-```
-
-This generates all code directly into the library directories from OpenAPI specs in `openapi/<domain>/`.
-
-### 2. Build Libraries
-
-```bash
-make build-libs
-```
-
-This compiles and packages the generated code into distributable libraries.
 
 ## Version Management
 
