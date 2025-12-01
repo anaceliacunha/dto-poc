@@ -100,25 +100,13 @@ Generated code locations:
 
 **Library Packaging:**
 
-For detailed information about building, packaging, and distributing the generated libraries, see [libs/README.md](libs/README.md). Individual library documentation:
-- [Java library (libs/java-lib/README.md)](libs/java-lib/README.md)
-- [Python library (libs/python-lib/README.md)](libs/python-lib/README.md)
-- [TypeScript library (libs/ts-lib/README.md)](libs/ts-lib/README.md)
-
-**How services consume the DTOs:**
-- **Java**: Uses the packaged JAR as a Maven dependency (`com.activate:activate-api-models`)
-- **Python**: Uses the packaged wheel as a pip package (`activate-api-models`), imports as `activate_api_models`
-- **React**: Uses the packaged NPM library (`@activate/api-models`)
-
-See `libs/README.md` for details on the library packaging system.
+For detailed information about building, packaging, and distributing the generated libraries, see [libs/README.md](libs/README.md).
 
 ## Runtime prerequisites
 
 * Java 8+ (the project compiles with `maven-compiler-plugin` set to `1.8`)
 * Python 3.11 (adjust commands if your interpreter uses a different alias)
 * Node 18+
-* Podman + Podman Compose (`brew install podman podman-compose`; swap back to Docker Compose if you prefer Docker)
-* openapi-generator CLI (7.17.0 or newer) available on your PATH (`brew install openapi-generator` or `npm i -g @openapitools/openapi-generator-cli`) for the codegen targets
 
 After generating code, build and install the libraries:
 
@@ -184,6 +172,14 @@ Add to `package.json`:
 ```
 
 ## Demo
+
+### Runtime prerequisites
+
+* Java 8+ (the project compiles with `maven-compiler-plugin` set to `1.8`)
+* Python 3.11 (adjust commands if your interpreter uses a different alias)
+* Node 18+
+* Podman + Podman Compose (`brew install podman podman-compose`; swap back to Docker Compose if you prefer Docker)
+* openapi-generator CLI (7.17.0 or newer) available on your PATH (`brew install openapi-generator` or `npm i -g @openapitools/openapi-generator-cli`) for the codegen targets
 
 ### Kafka infrastructure
 
