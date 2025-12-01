@@ -39,12 +39,14 @@ Add the dependency to your `pom.xml`:
 </dependency>
 ```
 
-Then import and use the models and APIs for your domain:
+Then import models and APIs for your domain:
 
 ```java
 import com.activate.<domain>.models.*;
 import com.activate.<domain>.apis.*;
 ```
+
+## Usage
 
 ### Using Models
 

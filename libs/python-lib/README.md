@@ -49,7 +49,14 @@ Or add to `requirements.txt`:
 activate-api-models==1.0.0
 ```
 
-Then import and use the models and APIs for your domain:
+Then import models and APIs for your domain:
+
+```python
+from activate_api_models.<domain>.models import ModelName, EnumName
+from activate_api_models.<domain>.apis.default_api_base import BaseDefaultApi
+```
+
+## Usage
 
 ### Using Models
 

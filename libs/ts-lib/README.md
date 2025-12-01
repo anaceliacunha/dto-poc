@@ -37,14 +37,37 @@ npm install /path/to/libs/ts-lib
 npm install @activate/api-models
 ```
 
+## Usage in Consumer Projects
+
+Add the package to your `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@activate/api-models": "^1.0.0"
+  }
+}
+```
+
+Or install via npm:
+
+```bash
+npm install @activate/api-models
+```
+
+Then import models and APIs for your domain:
+
+```typescript
+import type { ModelName } from '@activate/api-models/<domain>/models';
+import { EnumName } from '@activate/api-models/<domain>/models';
+import { DefaultApi, Configuration } from '@activate/api-models/<domain>/apis';
+```
+
 ## Usage
 
 ### Using Models
 
 ```typescript
-import type { ModelName } from '@activate/api-models/<domain>/models';
-import { EnumName } from '@activate/api-models/<domain>/models';
-
 // Create type-safe model objects
 const model: ModelName = {
     id: 1,
