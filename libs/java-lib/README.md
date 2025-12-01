@@ -20,13 +20,6 @@ All domains follow the same structure under `com.activate.<domain>/`.
 - **Version**: `1.0.0-SNAPSHOT`
 - **Packages**: `com.activate.<domain>.models`, `com.activate.<domain>.apis` (e.g., demo, assortment, promo)
 
-## Installation
-
-This library is installed to your local Maven repository using:
-```bash
-mvn clean install
-```
-
 ## Usage in Consumer Projects
 
 Add the dependency to your `pom.xml`:
@@ -128,13 +121,11 @@ public ResponseEntity<Void> create(@Valid @RequestBody ModelName model) {
 
 ## Build
 
-The OpenAPI generator writes code directly into `src/main/java/com/activate/{domain}/`. To build the JAR:
+To build and install the JAR to your local Maven repository:
 
 ```bash
 mvn clean install
 ```
-
-The JAR will be installed to your local Maven repository (`~/.m2/repository/com/activate/activate-api-models/`).
 
 ## Development
 

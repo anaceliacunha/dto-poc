@@ -1,15 +1,14 @@
 # API & DTO Generated Libraries
 
-This directory contains the generated OpenAPI code and packaging configurations for distributing DTOs and APIs as reusable libraries.
+This directory contains the generated OpenAPI code packaged as reusable libraries for Java, Python, and TypeScript/React applications.
 
-## Overview
+## Libraries
 
-OpenAPI generators write code directly into these library directories from domain-specific specs in `openapi/*/`:
-- `libs/java-lib/src/main/java/com/activate/` - Java models and APIs
-- `libs/python-lib/src/activate_api_models/` - Python models and APIs  
-- `libs/ts-lib/src/` - TypeScript models and APIs
+- **Java**: `com.activate:activate-api-models` - Maven JAR for Spring Boot applications
+- **Python**: `activate-api-models` - Python wheel for FastAPI applications  
+- **TypeScript**: `@activate/api-models` - NPM package for React/TypeScript applications
 
-The build process compiles/packages this generated code without any intermediate copying steps. All domains (e.g., demo, assortment, promo) contribute to the same shared library packages.
+All domains (e.g., demo, assortment, promo) are included in the same library package.
 
 ## Directory Structure
 
@@ -21,27 +20,19 @@ libs/
 ```
 
 **Library-specific documentation:**
-- [java-lib/README.md](java-lib/README.md) - Java library details, Maven configuration, and usage
-- [python-lib/README.md](python-lib/README.md) - Python library details, wheel packaging, and usage
-- [ts-lib/README.md](ts-lib/README.md) - TypeScript library details, NPM packaging, and usage
+- [java-lib/README.md](java-lib/README.md) - Maven configuration, usage examples, and Spring Boot integration
+- [python-lib/README.md](python-lib/README.md) - Wheel packaging, usage examples, and FastAPI integration
+- [ts-lib/README.md](ts-lib/README.md) - NPM packaging, usage examples, and React integration
 
 ## Building Libraries
 
-### Build All Libraries
+Build all libraries at once:
 
 ```bash
 make build-libs
 ```
 
-This will build all three library packages:
-- **Java JAR**: `libs/java-lib/target/activate-api-models-1.0.0-SNAPSHOT.jar`
-- **Python wheel**: `libs/python-lib/dist/activate_api_models-1.0.0-py3-none-any.whl`
-- **TypeScript/NPM**: `libs/ts-lib/dist/` (compiled JavaScript + type definitions)
-  - Compiled `.js` files
-  - TypeScript declaration files (`.d.ts`)
-  - Source maps (`.js.map`)
-
-### Build Individual Libraries
+Or build individually:
 
 ```bash
 make build-java-lib      # Build Java JAR
@@ -51,18 +42,18 @@ make build-ts-lib        # Build NPM package
 
 ## Installing Libraries
 
-### Install All Libraries to Consumer Applications
+Install all libraries to consumer applications:
 
 ```bash
 make install-libs
 ```
 
-### Install Individual Libraries
+Or install individually:
 
 ```bash
 make install-java-lib    # Install to ~/.m2/repository
-make install-python-lib  # Install wheel to Python service
-make install-ts-lib      # Install NPM package to React app
+make install-python-lib  # Install wheel to services/python-app
+make install-ts-lib      # Install NPM package to webapp/react-app
 ```
 
 ## Version Management

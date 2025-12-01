@@ -23,20 +23,6 @@ src/
   - APIs: `@activate/api-models/<domain>/apis` (e.g., `@activate/api-models/demo/apis`)
   - Runtime utilities: `@activate/api-models/<domain>/runtime`
 
-## Installation
-
-### From local build
-
-```bash
-npm install /path/to/libs/ts-lib
-```
-
-### From npm registry (if published)
-
-```bash
-npm install @activate/api-models
-```
-
 ## Usage in Consumer Projects
 
 Add the package to your `package.json`:
@@ -122,14 +108,14 @@ function YourComponent() {
 
 ## Build
 
-The OpenAPI generator writes code directly into `src/`. To build the package:
+To build the package:
 
 ```bash
 npm install
 npm run build
 ```
 
-The compiled JavaScript and TypeScript definitions will be in the `dist/` directory.
+The compiled output will be in the `dist/` directory.
 
 ## Development
 

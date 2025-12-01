@@ -29,13 +29,6 @@ All domains follow the same structure under `activate_api_models.<domain>/`.
 
 Python >= 3.11
 
-## Installation
-
-This library is packaged as a wheel using Python's build module:
-```bash
-python -m build
-```
-
 ## Usage in Consumer Projects
 
 Install the wheel in your Python environment:
@@ -100,7 +93,7 @@ app.include_router(api_impl.router)
 
 ## Build
 
-The OpenAPI generator writes code directly into `src/activate_api_models/{domain}/`. To build the wheel:
+To build the wheel package:
 
 ```bash
 python -m build

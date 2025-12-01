@@ -98,13 +98,17 @@ Generated code locations:
 | TypeScript | @activate/api-models/domain/models | `libs/ts-lib/src/<domain>/models/` |
 | TypeScript | @activate/api-models/domain/apis  | `libs/ts-lib/src/<domain>/apis/` |
 
-**Library Packaging:**
+**Generated Libraries:**
 
-For detailed information about building, packaging, and distributing the generated libraries, see [libs/README.md](libs/README.md).
+The generated code is packaged into reusable libraries:
+- **Java**: `com.activate:activate-api-models` (Maven JAR)
+- **Python**: `activate-api-models` (Python wheel)
+- **TypeScript**: `@activate/api-models` (NPM package)
 
-**Library Usage:**
-
-For detailed information about using the generated libraries in your Java, Python, and React applications, see [README.md](../README.md).
+For build, installation, and troubleshooting information, see [libs/README.md](libs/README.md). For usage examples in your applications, see the individual library READMEs:
+- [libs/java-lib/README.md](libs/java-lib/README.md)
+- [libs/python-lib/README.md](libs/python-lib/README.md)
+- [libs/ts-lib/README.md](libs/ts-lib/README.md)
 
 ## Prerequisites
 
